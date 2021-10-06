@@ -16,6 +16,7 @@ args = parser.parse_args()
 GOODS_FILE = "goods.csv"
 BAKERY_OUT2 = "-out2.csv"
 BINGO = "bingoBaskets.csv"
+AUTHORS = 'authorlist.psv'
 
 
 def load_good_labels(filename):
@@ -169,6 +170,7 @@ if __name__ == "__main__":
     if args.dataset == 'bingo':
         bingo_bv_df = stb.convert_sparse_to_binarydf(BINGO, 1411)
         freq_sets, set_counts = apriori_freq(bingo_bv_df, bingo_bv_df.columns, args.minrs)
+        good_labels_df = pandas.read_csv('authorlist.psv', sep='|', index_col=0)
     else:
         good_labels_df = load_good_labels(GOODS_FILE)
         bakery_bv_df = load_full_bv_bakery(f"{args.dataset}/{args.dataset}{BAKERY_OUT2}")
