@@ -104,19 +104,19 @@ def plot_rsup_of_sets(rsup_list, k):
     plt.title(f"R-Support for sets of size {k}")
     plt.show()
 
-def calculate_conf(set_counts, combined, right_side):
+def calculate_conf(set_counts, combined, combined_no_right):
     return (set_counts['f'+str(len(combined))][combined] 
-            / set_counts['f'+str(len(right_side))][right_side])
+            / set_counts['f'+str(len(combined_no_right))][combined_no_right])
 
 def get_assoc_rules(skyline_freq, set_counts, minconf):
-    assoc_rules = set()
+    assoc_rules = {}
     for freq_set in skyline_freq:
         if len(freq_set) >= 2:
             for item in freq_set:
                 item_as_set = frozenset([item])
-                conf = calculate_conf(set_counts, freq_set, item_as_set)
+                conf = calculate_conf(set_counts, freq_set, freq_set.difference(item_as_set))
                 if conf >= minconf:
-                    assoc_rules.add((freq_set.difference(item_as_set), item))
+                    assoc_rules[(freq_set.difference(item_as_set), item)] = conf
     return assoc_rules
 
 def assoc_rules_to_str(good_labels_df, assoc_rules):
@@ -124,6 +124,7 @@ def assoc_rules_to_str(good_labels_df, assoc_rules):
     for rule in assoc_rules:
         assoc_rules_str += (f"\n{[good_labels_df.iloc[item-1]['Flavor'] + good_labels_df.iloc[item-1]['Food'] for item in rule[0]]} ->"
                             f"{good_labels_df.iloc[rule[1] - 1]['Flavor'] + good_labels_df.iloc[rule[1] - 1]['Food']}")
+        assoc_rules_str += f": {assoc_rules[rule]}"
     return assoc_rules_str
     
 
