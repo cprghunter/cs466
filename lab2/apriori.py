@@ -4,6 +4,7 @@ import argparse
 import itertools
 import copy
 import matplotlib.pyplot as plt
+import sparse_to_binary as stb
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--dataset', type=str)
@@ -14,6 +15,7 @@ args = parser.parse_args()
 
 GOODS_FILE = "goods.csv"
 BAKERY_OUT2 = "-out2.csv"
+BINGO = "bingoBaskets.csv"
 
 
 def load_good_labels(filename):
@@ -164,9 +166,13 @@ def candidate_gen(freq_sets, k):
     return c
 
 if __name__ == "__main__":
-    good_labels_df = load_good_labels(GOODS_FILE)
-    bakery_bv_df = load_full_bv_bakery(f"{args.dataset}/{args.dataset}{BAKERY_OUT2}")
-    freq_sets, set_counts = apriori_freq(bakery_bv_df, bakery_bv_df.columns, args.minrs)
+    if args.dataset == 'bingo':
+        bingo_bv_df = stb.convert_sparse_to_binarydf(BINGO, 1411)
+        freq_sets, set_counts = apriori_freq(bingo_bv_df, bingo_bv_df.columns, args.minrs)
+    else:
+        good_labels_df = load_good_labels(GOODS_FILE)
+        bakery_bv_df = load_full_bv_bakery(f"{args.dataset}/{args.dataset}{BAKERY_OUT2}")
+        freq_sets, set_counts = apriori_freq(bakery_bv_df, bakery_bv_df.columns, args.minrs)
     skyline_freq = consolidate_freq_set_dict(freq_sets)
     skyline_assoc_rules = get_assoc_rules(skyline_freq, set_counts, args.minconf)
     print([set(freq) for freq in skyline_freq])
