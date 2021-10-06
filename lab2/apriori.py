@@ -2,10 +2,14 @@ import pandas
 import numpy
 import argparse
 import itertools
+import copy
+import matplotlib.pyplot as plt
 
 parser = argparse.ArgumentParser()
-parser.add_argument('--file')
-parser.add_argument('--minrs', type=int)
+parser.add_argument('--dataset', type=str)
+parser.add_argument('--plot', dest='plot', action='store_true')
+parser.add_argument('--minrs', type=float)
+parser.add_argument('--minconf', type=float)
 args = parser.parse_args()
 
 GOODS_FILE = "goods.csv"
@@ -25,8 +29,16 @@ def load_full_bv_bakery(filename):
     # example full_bv_df.iloc[2][2]
     return full_bv_df
 
+def itemset_in_basket(transaction, itemset):
+    """
+    Returns a True if itemset in transaction, False otherwise
+    """
+    for item in itemset:
+        if not transaction[item]:
+            return False
+    return True
 
-def apriori_freq_first_pass(transactions, items, minsup):
+def apriori_freq(transactions, items, minsup):
     """
     transactions - df from -out2 file
     items - list from 1-50 representing bakery items and indeces of df vector
@@ -34,58 +46,127 @@ def apriori_freq_first_pass(transactions, items, minsup):
     """
     freq_sets = {}
     item_counts = {i: sum(transactions[i]) for i in transactions.columns}
-    sum_all_items = sum(item_counts[i] for i in transactions.columns)
-    item_rsup = {i: item_counts[i] /
-                 sum_all_items for i in transactions.columns}
-    print(item_rsup)
+    item_rsup = {i: item_counts[i] / len(transactions.index)
+                    for i in transactions.columns}
     k = 1
     freq_sets = {'f'+str(k): round_1_candidates(items, item_rsup, minsup)}
+
+    # start counts cache to make association rule calculations faster
+    item_counts_with_set_keys = {frozenset([i]): item_counts[i] for i in transactions.columns}
+    set_counts = {'f'+str(k): item_counts_with_set_keys} 
+    # second dict with no skyline pruning
+    all_freq_sets = copy.deepcopy(freq_sets)     
+    """
+    freq_sets = {f3: {frozenset(i, j, k): rsup, frozenset(x, y, z): rsup}} 
+    """
     k = 2
-    print(freq_sets['f'+str(k-1)])
+    print(f"f1 = {len(freq_sets['f'+str(k-1)])}")
     while freq_sets.get('f'+str(k-1)):
-        candidates = candidate_gen(freq_sets['f'+str(k-1)], k)
-        count_dict = {candidates[i]: 0 for i in range(0, len(candidates))}
+        candidates = candidate_gen(freq_sets, k-1)
+        count_dict = {candidate: 0 for candidate in candidates}
         for candidate in count_dict:
             candidate_indexes = numpy.asarray(candidate)
-            for i in range(len(candidate_indexes)):
-                candidate_indexes[i] -= 1
-            for i in range(0, len(transactions)):
-                row = transactions.iloc[i, candidate_indexes]
-                if row.sum() == k:
+            for i in range(len(transactions.index)):
+                if itemset_in_basket(transactions.iloc[i], candidate):
                     count_dict[candidate] += 1
+        set_counts['f'+str(k)] = count_dict
 
-        print("DONE WITH ROUND COUNTING")
-        still_frequent = []
+        # get frequent sets from candidates
+        still_frequent = {}
+        rsup_all = []
         for i in count_dict:
-            print(count_dict[i] / sum_all_items)
-            if (count_dict[i] / sum_all_items) >= minsup:
-                still_frequent.append(i)
-
+            rsup = count_dict[i] / len(transactions.index)
+            rsup_all.append(rsup)
+            if rsup >= minsup:
+                still_frequent[i] = rsup 
         freq_sets['f'+str(k)] = still_frequent
 
-        if freq_sets['f'+str(k)]:
-            print(freq_sets['f'+str(k)], end=' ')
-        else:
-            print("Empty frequent set detected, ending...")
+        if args.plot:
+            plot_rsup_of_sets(rsup_all, k)
 
+        # remove all subsets of larger sets from freq_sets to maintain skyline 
+        sets_to_remove = set()
+        for freq_set in still_frequent.keys():
+            for smaller_freq_set in freq_sets['f'+str(k-1)].keys():
+                if smaller_freq_set.issubset(freq_set):
+                    sets_to_remove.add(smaller_freq_set)
+
+        for smaller_set in sets_to_remove:
+            freq_sets['f'+str(k-1)].pop(smaller_set)
+
+        if not freq_sets['f'+str(k)]:
+            print("Empty frequent set detected, ending...")
         k += 1
+    return freq_sets, set_counts
+
+def plot_rsup_of_sets(rsup_list, k):
+    plt.scatter(rsup_list, [1 for _ in rsup_list])
+    plt.title(f"R-Support for sets of size {k}")
+    plt.show()
+
+def calculate_conf(set_counts, combined, right_side):
+    return (set_counts['f'+str(len(combined))][combined] 
+            / set_counts['f'+str(len(right_side))][right_side])
+
+def get_assoc_rules(skyline_freq, set_counts, minconf):
+    assoc_rules = set()
+    for freq_set in skyline_freq:
+        if len(freq_set) >= 2:
+            for item in freq_set:
+                item_as_set = frozenset([item])
+                conf = calculate_conf(set_counts, freq_set, item_as_set)
+                if conf >= minconf:
+                    assoc_rules.add((freq_set.difference(item_as_set), item))
+    return assoc_rules
+
+def assoc_rules_to_str(good_labels_df, assoc_rules):
+    assoc_rules_str = ""
+    for rule in assoc_rules:
+        assoc_rules_str += (f"\n{[good_labels_df.iloc[item-1]['Flavor'] + good_labels_df.iloc[item-1]['Food'] for item in rule[0]]} ->"
+                            f"{good_labels_df.iloc[rule[1] - 1]['Flavor'] + good_labels_df.iloc[rule[1] - 1]['Food']}")
+    return assoc_rules_str
+    
 
 def round_1_candidates(items, item_rsup, minsup):
-    candidates = []
+    candidates_and_rsup = {}
     for item in items:
         if item_rsup[item] >= minsup:
-            candidates.append(item)
-    return candidates
+            candidate = frozenset([item])
+            candidates_and_rsup[candidate] = item_rsup[item]
+    return candidates_and_rsup
 
-def candidate_gen(candidates, k):
-    '''Note, this solely does the join step, not pruning currently'''
-    union = itertools.combinations(candidates, k)
-    c = []
-    for i in union:
-        c.append(i)
+def consolidate_freq_set_dict(freq_sets):
+    skyline_freq_sets = set()
+    for fk_dict in freq_sets:
+        for freq_set in freq_sets[fk_dict].keys():
+            skyline_freq_sets.add(freq_set)
+    return skyline_freq_sets
+
+def candidate_gen(freq_sets, k):
+    """
+    freq_sets = {f3: {frozenset(i, j, k): rsup, frozenset(x, y, z): rsup}} 
+    """
+    c = set()
+    ksets = freq_sets['f'+str(k)].keys()
+    for candidate in ksets:
+        for other_candidate in ksets:
+            union = candidate.union(other_candidate) 
+            if len(union) == k + 1:
+                flag = True
+                for item in union:
+                    subset = union.difference(frozenset((item,)))
+                    if not subset in ksets:
+                        flag = False
+                        break
+                if flag:
+                    c.add(union)
     return c
 
 if __name__ == "__main__":
     good_labels_df = load_good_labels(GOODS_FILE)
-    bakery_bv_df = load_full_bv_bakery(f"1000/1000{BAKERY_OUT2}")
-    apriori_freq_first_pass(bakery_bv_df, (i for i in range(1, 51)), 0.026)
+    bakery_bv_df = load_full_bv_bakery(f"{args.dataset}/{args.dataset}{BAKERY_OUT2}")
+    freq_sets, set_counts = apriori_freq(bakery_bv_df, bakery_bv_df.columns, args.minrs)
+    skyline_freq = consolidate_freq_set_dict(freq_sets)
+    skyline_assoc_rules = get_assoc_rules(skyline_freq, set_counts, args.minconf)
+    print([set(freq) for freq in skyline_freq])
+    print(assoc_rules_to_str(good_labels_df, skyline_assoc_rules))
