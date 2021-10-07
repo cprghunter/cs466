@@ -183,7 +183,6 @@ if __name__ == "__main__":
         author_labels_df = pandas.read_csv('authorlist.psv', sep='|', index_col=0)
         skyline_freq = consolidate_freq_set_dict(freq_sets)
         skyline_assoc_rules = get_assoc_rules(skyline_freq, set_counts, args.minconf)
-        print([set(freq) for freq in skyline_freq])
         print(bingo_rules_to_str(author_labels_df, skyline_assoc_rules))
     else:
         good_labels_df = load_good_labels(GOODS_FILE)
