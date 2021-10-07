@@ -133,10 +133,13 @@ def assoc_rules_to_str(good_labels_df, assoc_rules):
     return assoc_rules_str
     
 def bingo_rules_to_str(bingo_labels, assoc_rules):
+    assoc_rules_str = ""
     bingo_labels.columns = ['Name']
     for rule in assoc_rules:
-        print(f"{[bingo_labels.iloc[item-2]['Name'] for item in rule[0]]} -> {bingo_labels.iloc[rule[1]-2]['Name']}")
-    return
+        assoc_rules_str += (f"\n{[bingo_labels.iloc[item-2]['Name'] for item in rule[0]]} -> {bingo_labels.iloc[rule[1]-2]['Name']}")
+        assoc_rules_str += (f" | Confidence: {assoc_rules[rule][0]}")
+        assoc_rules_str += (f" | Support: {assoc_rules[rule][1]}")
+    return assoc_rules_str
 
 def round_1_candidates(items, item_rsup, minsup):
     candidates_and_rsup = {}
@@ -181,11 +184,11 @@ if __name__ == "__main__":
         skyline_freq = consolidate_freq_set_dict(freq_sets)
         skyline_assoc_rules = get_assoc_rules(skyline_freq, set_counts, args.minconf)
         print([set(freq) for freq in skyline_freq])
-        bingo_rules_to_str(author_labels_df, skyline_assoc_rules)
+        print(bingo_rules_to_str(author_labels_df, skyline_assoc_rules))
     else:
         good_labels_df = load_good_labels(GOODS_FILE)
         bakery_bv_df = load_full_bv_bakery(f"{args.dataset}/{args.dataset}{BAKERY_OUT2}")
         freq_sets, set_counts = apriori_freq(bakery_bv_df, bakery_bv_df.columns, args.minrs)
-    skyline_freq = consolidate_freq_set_dict(freq_sets)
-    skyline_assoc_rules = get_assoc_rules(skyline_freq, set_counts, args.minconf)
-    print(assoc_rules_to_str(good_labels_df, skyline_assoc_rules))
+        skyline_freq = consolidate_freq_set_dict(freq_sets)
+        skyline_assoc_rules = get_assoc_rules(skyline_freq, set_counts, args.minconf)
+        print(assoc_rules_to_str(good_labels_df, skyline_assoc_rules))
