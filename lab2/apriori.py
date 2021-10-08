@@ -176,6 +176,16 @@ def candidate_gen(freq_sets, k):
                     c.add(union)
     return c
 
+def auth_to_skyline(skyline_freq, freq_sets, author_labels_df):
+    author_labels_df.columns = ['Name']
+    for sky in skyline_freq:
+        for f in freq_sets:
+            for freq in freq_sets[f].items():
+                if sky == freq[0]:
+                    print((f"{[author_labels_df.iloc[item-2]['Name'] for item in freq[0]]}, Support: {freq[1]}"))
+ 
+    return 
+
 if __name__ == "__main__":
     if args.dataset == 'bingo':
         bingo_bv_df = stb.convert_sparse_to_binarydf(BINGO, 1411)
@@ -183,6 +193,7 @@ if __name__ == "__main__":
         author_labels_df = pandas.read_csv('authorlist.psv', sep='|', index_col=0)
         skyline_freq = consolidate_freq_set_dict(freq_sets)
         skyline_assoc_rules = get_assoc_rules(skyline_freq, set_counts, args.minconf)
+        auth_to_skyline(skyline_freq, freq_sets, author_labels_df)
         print(bingo_rules_to_str(author_labels_df, skyline_assoc_rules))
     else:
         good_labels_df = load_good_labels(GOODS_FILE)
