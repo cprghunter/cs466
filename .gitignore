@@ -1,3 +1,4 @@
 *.csv
 lab2/authorlist.psv
 lab2/__pycache__/sparse_to_binary.cpython-38.pyc
+lab3/decisionTrees.ipynb

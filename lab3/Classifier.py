@@ -5,18 +5,33 @@ import sys
 import json
 
 def classifier(dataset, tree):
-
     data = pd.read_csv(dataset)
     df = pd.DataFrame(data)
     df = df.drop(labels=[0,1])
     open_tree = open(tree, 'r')
-    dt = json.load(open_tree)
+    decision_tree = json.load(open_tree)
     outcomes = df.iloc[:, -1].unique()
     print(outcomes)
+    confusion_matrix = pd.DataFrame(0, index=outcomes, columns=outcomes)
+    confusion_matrix.columns.name = "Actual \\ Classified"
+    result_matrix = fill_matrix(confusion_matrix, decision_tree, df)
+    print(result_matrix)
 
+def fill_matrix(matrix, tree, data):
+    for index, row in data.iterrows():
+        actual = row[-1]
+        predicted = traverse_tree(tree, row)
+        matrix.at[actual, predicted] += 1
+    return matrix
 
-
-
+def traverse_tree(tree, row):
+    if 'node' in tree.keys(): 
+        find_edge = row[tree['node']['var']]
+        for edge in tree['node']['edges']:
+            if edge['edge']['value'] == find_edge:
+                return traverse_tree(edge['edge'], row)
+    else:
+        return tree['leaf']['decision']
 
 
 if __name__ == '__main__':
