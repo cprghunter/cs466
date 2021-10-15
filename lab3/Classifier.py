@@ -7,10 +7,16 @@ import json
 def classifier(dataset, tree):
     data = pd.read_csv(dataset)
     df = pd.DataFrame(data)
-    df = df.drop(labels=[0,1])
+    if df.iloc[1,0] != np.nan:
+        use_column = df.iloc[1,0]
+        df = df.drop(labels=[0,1])
+        outcomes = df.loc[:, str(use_column)].unique()
+    
+    
+    
     open_tree = open(tree, 'r')
     decision_tree = json.load(open_tree)
-    outcomes = df.iloc[:, -1].unique()
+    
     print(outcomes)
     confusion_matrix = pd.DataFrame(0, index=outcomes, columns=outcomes)
     confusion_matrix.columns.name = "Actual \\ Classified"
