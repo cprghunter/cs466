@@ -1,16 +1,25 @@
 import pandas
 import sys
 import math
+import json
 
-
+RES_FNAME = "decision_tree.json"
 
 class Leaf:
     def __init__(self, class_label, percent):
         self.class_label = class_label
         self.percent = percent
+        self.parent = None
 
     def __repr__(self):
         return f"class label: {self.class_label}, percent: {self.percent}"
+
+    def to_dict(self):
+        json_dict = {}
+        json_dict["decision"] = self.class_label
+        json_dict["p"] = self.percent
+        return json_dict
+
 
 class Node:
     def __init__(self, attribute):
@@ -21,6 +30,19 @@ class Node:
     def add_child(self, edge_label, other):
         self.edges[edge_label] = other
         other.parent = self
+
+    def __repr__(self):
+        return f"node: {self.attribute}, edges: {self.edges}"
+    
+    def to_dict(self):
+        json_dict = {}
+        json_dict["var"] = self.attribute
+        json_dict["edges"] = [{"edge": 
+                                {"value": key, 
+                                 "node": self.edges[key].to_dict()}}
+                                for key in self.edges]
+        return json_dict
+
 
 def calculate_entropy(df, class_attr, class_labels):
     entropy = 0
@@ -104,4 +126,9 @@ if __name__ == "__main__":
     print(c45(data_df, [], 0, class_attr, class_attr_values, attr_domain_dict))
     print(c45(data_df.loc[data_df[class_attr] == class_attr_values[0]], attributes, 0,
               class_attr, class_attr_values, attr_domain_dict))
-    c45(data_df, attributes, 0, class_attr, class_attr_values, attr_domain_dict)
+    tree = c45(data_df, attributes, 0, class_attr, class_attr_values, attr_domain_dict)
+    tree_dict = {}
+    tree_dict["dataset"] = sys.argv[1]
+    tree_dict["node"] = tree.to_dict()
+    with open(RES_FNAME, 'w') as f:
+        f.write(json.dumps(tree_dict))
