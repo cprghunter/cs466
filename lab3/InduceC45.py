@@ -37,10 +37,16 @@ class Node:
     def to_dict(self):
         json_dict = {}
         json_dict["var"] = self.attribute
-        json_dict["edges"] = [{"edge": 
-                                {"value": key, 
-                                 "node": self.edges[key].to_dict()}}
-                                for key in self.edges]
+        edge_list = []
+        for key in self.edges:
+            edge_dict = {}
+            edge_dict["edge"] = {"value": key}
+            if isinstance(self.edges[key], Leaf):
+                edge_dict["edge"]["leaf"] = self.edges[key].to_dict()
+            else:
+                edge_dict["edge"]["node"] = self.edges[key].to_dict()
+            edge_list.append(edge_dict)
+        json_dict["edges"] = edge_list
         return json_dict
 
 
