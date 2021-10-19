@@ -105,11 +105,16 @@ def c45(df, attributes, threshold, class_attr, class_labels, attr_domain_dict):
         else:
             node = Node(best_split)
             attributes.remove(best_split)
-            for attr_value in df[best_split].unique():
-                node.add_child(attr_value, 
-                               c45(df.loc[df[best_split] == attr_value],
-                               attributes, threshold, class_attr, class_labels,
-                               attr_domain_dict))
+            #for attr_value in df[best_split].unique(): replace with with attr_domain_dict look
+            for attr_value in attr_domain_dict[best_split]:
+                if not df.loc[df[best_split] == attr_value].shape[0]:
+                    node.add_child(attr_value,
+                                   get_leaf_with_most_freq_class(df, class_attr))
+                else:
+                    node.add_child(attr_value, 
+                                   c45(df.loc[df[best_split] == attr_value],
+                                   attributes, threshold, class_attr, class_labels,
+                                   attr_domain_dict))
             return node
 
 def build_attr_domain_dict(df, attributes):
@@ -129,9 +134,6 @@ if __name__ == "__main__":
     attr_domain_dict = build_attr_domain_dict(data_df, attributes)
 
     print(f"class labels {class_attr_values}")
-    print(c45(data_df, [], 0, class_attr, class_attr_values, attr_domain_dict))
-    print(c45(data_df.loc[data_df[class_attr] == class_attr_values[0]], attributes, 0,
-              class_attr, class_attr_values, attr_domain_dict))
     tree = c45(data_df, attributes, 0, class_attr, class_attr_values, attr_domain_dict)
     tree_dict = {}
     tree_dict["dataset"] = sys.argv[1]
