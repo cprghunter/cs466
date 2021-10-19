@@ -24,6 +24,7 @@ def classifier(dataset, tree):
         result_matrix = fill_matrix(confusion_matrix, decision_tree, df, str(use_column))
         print(result_matrix)
         stats = calculate_stats(result_matrix, df)
+        print(stats)
         return result_matrix, stats
     else:
         just_predict(decision_tree, df)
@@ -35,16 +36,16 @@ def calculate_stats(matrix, df):
     for i in range(0, len(matrix.columns)):
         total_correct += matrix.iat[i,i]
     
-    stats = []
+    stats = {}
 
     print(f"Total Correctly Classified: {total_correct}")
-    stats.append(total_correct)
+    stats['total_correct'] = total_correct
     print(f"Total Incorrectly Classified {total_classified-total_correct}")
-    stats.append(total_classified-total_correct)
+    stats['total_incorrect'] = (total_classified-total_correct)
     accuracy = (total_correct/(total_classified)) * 100
     err_rate = (1-(total_correct/total_classified)) * 100
-    stats.append(round(accuracy, 3))
-    stats.append(round(err_rate, 3))
+    stats['accuracy']=(round(accuracy, 3))
+    stats['err_rate']=(round(err_rate, 3))
     print(f"Accuracy: {round(accuracy, 3)}%, Error Rate: {round(err_rate, 3)}%")
     return stats
 
