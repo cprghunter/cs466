@@ -123,16 +123,6 @@ def build_attr_domain_dict(df, attributes):
         attr_domain[attribute] = df[attribute].unique()
     return attr_domain
 
-def c45_produce_json(df, attributes, threshold, class_attr, 
-                    class_labels, attr_domain_dict, res_file):
-    tree = c45(data_df, attributes, 0, class_attr, class_attr_values, attr_domain_dict)
-    tree_dict = {}
-    tree_dict["dataset"] = sys.argv[1]
-    tree_dict["node"] = tree.to_dict()
-    with open(RES_FNAME, 'w') as f:
-        f.write(json.dumps(tree_dict))
-
-
 if __name__ == "__main__":
     data_df = pandas.read_csv(sys.argv[1], index_col=None)
     # data_df[col][0] is number of values in the attributes domain
@@ -144,5 +134,9 @@ if __name__ == "__main__":
     attr_domain_dict = build_attr_domain_dict(data_df, attributes)
 
     print(f"class labels {class_attr_values}")
-    c45_produce_json(data_df, attributes, 0, class_attr, class_attr_values,
-            attr_domain_dict, RES_FNAME)
+    tree = c45(data_df, attributes, 0, class_attr, class_attr_values, attr_domain_dict)
+    tree_dict = {}
+    tree_dict["dataset"] = sys.argv[1]
+    tree_dict["node"] = tree.to_dict()
+    with open(RES_FNAME, 'w') as f:
+        f.write(json.dumps(tree_dict))
