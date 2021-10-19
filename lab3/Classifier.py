@@ -1,6 +1,5 @@
 import pandas as pd
 import numpy as np
-import argparse
 import sys
 import json
 
@@ -24,7 +23,8 @@ def classifier(dataset, tree):
         confusion_matrix.columns.name = "Actual \\ Classified"
         result_matrix = fill_matrix(confusion_matrix, decision_tree, df, str(use_column))
         print(result_matrix)
-        calculate_stats(result_matrix, df)
+        stats = calculate_stats(result_matrix, df)
+        return result_matrix, stats
     else:
         just_predict(decision_tree, df)
 
@@ -35,11 +35,19 @@ def calculate_stats(matrix, df):
     for i in range(0, len(matrix.columns)):
         total_correct += matrix.iat[i,i]
     
+    stats = []
+
     print(f"Total Correctly Classified: {total_correct}")
+    stats.append(total_correct)
     print(f"Total Incorrectly Classified {total_classified-total_correct}")
+    stats.append(total_classified-total_correct)
     accuracy = (total_correct/(total_classified)) * 100
     err_rate = (1-(total_correct/total_classified)) * 100
+    stats.append(round(accuracy, 3))
+    stats.append(round(err_rate, 3))
     print(f"Accuracy: {round(accuracy, 3)}%, Error Rate: {round(err_rate, 3)}%")
+    return stats
+
 
 def just_predict(tree, data): #TODO
     for index, row in data.iterrows():
@@ -64,4 +72,4 @@ def traverse_tree(tree, row):
 
 
 if __name__ == '__main__':
-    classifier(sys.argv[1], sys.argv[2])
+    classifier(dataset = sys.argv[1], tree = sys.argv[2])
