@@ -71,9 +71,9 @@ def all_but_one(df, attributes, threshold, class_attr,
 
     matrix_array = []
     stats_array = []
-    print(df)
     for i in range(len(df)):
-        test = df.iloc[i]
+        test = df.loc[[i+2]]
+        print(test)
         train = df.drop(labels=i+2, axis=0)
 
         # produces json
@@ -99,8 +99,8 @@ def all_but_one(df, attributes, threshold, class_attr,
         base_stats['total_correct'] += stats_array[i]['total_correct']
         base_stats['total_incorrect'] += stats_array[i]['total_incorrect']
 
-    overall_acc = (base_stats['total_correct']/sum(len(ds) for ds in data_subsets))* 100
-    overall_err = (base_stats['total_incorrect']/sum(len(ds) for ds in data_subsets))* 100
+    overall_acc = (base_stats['total_correct']/len(df))* 100
+    overall_err = (base_stats['total_incorrect']/len(df))* 100
     print('\nRESULTS')
     print(base_matrix)
     print(f"Overall Accuracy: {round(overall_acc, 4)}")
@@ -124,7 +124,7 @@ if __name__ == "__main__":
     attr_domain_dict = c45.build_attr_domain_dict(df, attributes)
     threshold = 0.2
     
-    if k > -1:
+    if k > 1:
         data_subsets = generate_data_subsets(df, k)
         kfold(data_subsets, attributes, threshold, class_attr, class_labels, attr_domain_dict)
     elif k == -1:
