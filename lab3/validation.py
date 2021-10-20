@@ -8,17 +8,21 @@ res_file_name = 'decision_tree.json'
 def generate_data_subsets(df, k):
     data_subsets = []
     data_len = df.shape[0]
-    for i in range(0, k-1):
-        subset = df.sample(n=max(df.shape[0],int(data_len/k)))
+    for i in range(k-1):
+        if df.shape[0] < int(data_len)/k:
+            subset = df.sample(n=df.shape[0])
+        else:
+            subset = df.sample(n=int(data_len/k))
         data_subsets.append(subset)
         df = df.drop(subset.index)
+    data_subsets.append(df)
     return data_subsets
 
 def get_training_dataset(i, data_subsets):
     df = pandas.DataFrame()
     for j  in range(len(data_subsets)):
         if j != i:
-            df.append(data_subsets[j])
+            df = df.append(data_subsets[j])
     return df
 
 def kfold(data_subsets, attributes, threshold, class_attr, 
@@ -33,9 +37,8 @@ def kfold(data_subsets, attributes, threshold, class_attr,
                             class_labels, attr_domain_dict, res_file_name)
 
         # classify and generate statistics
-        matrix, stats = c.classifier(test.to_csv(), res_file_name)
-        print(matrix)
-        print(stats)
+        matrix, stats = c.classifier(test, res_file_name, use_column=class_attr, 
+                                     outcomes=class_labels)
 
 def all_but_one(df, attributes, threshold, class_attr, 
           class_labels, attr_domain_dict): 

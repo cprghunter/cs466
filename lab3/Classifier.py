@@ -3,17 +3,20 @@ import numpy as np
 import sys
 import json
 
-def classifier(dataset, tree):
-    data = pd.read_csv(dataset)
-    df = pd.DataFrame(data)
-    if not pd.isna(df.iloc[1,0]):
-        use_column = df.iloc[1,0]
-        df = df.drop(labels=[0,1])
-        outcomes = df.loc[:, str(use_column)].unique()
-        make_matrix = True
+def classifier(dataset, tree, use_column=None, outcomes=None):
+    if type(dataset) == str:
+        df = pd.read_csv(dataset)
+        if not pd.isna(df.iloc[1,0]):
+            use_column = df.iloc[1,0]
+            df = df.drop(labels=[0,1])
+            outcomes = df.loc[:, str(use_column)].unique()
+            make_matrix = True
+        else:
+            df.drop(labels=[0, 1])
+            make_matrix = False
     else:
-        df.drop(labels=[0, 1])
-        make_matrix = False
+        df = dataset
+        make_matrix = True
     
     open_tree = open(tree, 'r')
     decision_tree = json.load(open_tree)
