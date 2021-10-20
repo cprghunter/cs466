@@ -3,6 +3,7 @@ import InduceC45 as c45
 import sys
 import pandas
 import statistics as st
+import csv
 
 res_file_name = 'decision_tree.json'
 
@@ -115,14 +116,29 @@ if __name__ == "__main__":
     else:
         training_file = sys.argv[1]
         k = int(sys.argv[2])
+        restr_file = None
+    
 
     df = pandas.read_csv(training_file)
     class_attr = df.iloc[1][0]
+
+    if restr_file:
+        cols = list(df.columns.values)
+        with open(restr_file, 'r') as f:
+            restr = csv.reader(f)
+            i = 0
+            for row in restr:
+                for col in row:
+                    if col == "0":
+                        df = df.drop(labels=cols[i], axis=1)
+                    i += 1
+
     df = df.drop(labels=[0, 1])
+
     class_labels = df[class_attr].unique()
     attributes = [attr for attr in df.columns if not attr == class_attr]
     attr_domain_dict = c45.build_attr_domain_dict(df, attributes)
-    threshold = 0.2
+    threshold = 0.27
     
     if k > 1:
         data_subsets = generate_data_subsets(df, k)
@@ -132,4 +148,3 @@ if __name__ == "__main__":
           class_labels, attr_domain_dict)
     else:
         pass
-
