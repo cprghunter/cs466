@@ -1,4 +1,5 @@
 import pandas
+import copy
 import sys
 import math
 import json
@@ -69,10 +70,10 @@ def calculate_attribute_entropy(df, class_attr, class_labels, attr_domain, attr)
                                             class_attr, class_labels) / df.shape[0])
     return total
         
-def select_splitting_attribute(df, class_attr, class_labels, attr_domain_dict, threshold):
+def select_splitting_attribute(df, attributes, class_attr, class_labels, attr_domain_dict, threshold):
     entropy_of_unsplit = calculate_entropy(df, class_attr, class_labels)
     gain = {}
-    for attribute in attr_domain_dict.keys():
+    for attribute in attributes:
         attr_entropy = calculate_attribute_entropy(df, class_attr, 
                                                     class_labels, 
                                                     attr_domain_dict[attribute],
@@ -98,7 +99,7 @@ def c45(df, attributes, threshold, class_attr, class_labels, attr_domain_dict):
         return get_leaf_with_most_freq_class(df, class_attr)
     else:
 
-        best_split = select_splitting_attribute(df, class_attr, class_labels,
+        best_split = select_splitting_attribute(df, attributes, class_attr, class_labels,
                                                 attr_domain_dict, threshold)
         if not best_split: # case where all splits are below threshold
             return get_leaf_with_most_freq_class(df, class_attr)
@@ -113,7 +114,7 @@ def c45(df, attributes, threshold, class_attr, class_labels, attr_domain_dict):
                 else:
                     node.add_child(attr_value, 
                                    c45(df.loc[df[best_split] == attr_value],
-                                   attributes, threshold, class_attr, class_labels,
+                                   copy.deepcopy(attributes), threshold, class_attr, class_labels,
                                    attr_domain_dict))
             return node
 
@@ -125,11 +126,11 @@ def build_attr_domain_dict(df, attributes):
 
 def c45_produce_json(df, attributes, threshold, class_attr, 
                     class_labels, attr_domain_dict, res_file):
-    tree = c45(data_df, attributes, 0, class_attr, class_attr_values, attr_domain_dict)
+    tree = c45(df, attributes, threshold, class_attr, class_labels, attr_domain_dict)
     tree_dict = {}
     tree_dict["dataset"] = sys.argv[1]
     tree_dict["node"] = tree.to_dict()
-    with open(RES_FNAME, 'w') as f:
+    with open(res_file, 'w') as f:
         f.write(json.dumps(tree_dict))
 
 
