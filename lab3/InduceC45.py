@@ -1,4 +1,5 @@
 import pandas
+import csv
 import copy
 import sys
 import math
@@ -142,6 +143,18 @@ if __name__ == "__main__":
     data_df = pandas.read_csv(sys.argv[1], index_col=None)
     # data_df[col][0] is number of values in the attributes domain
     class_attr = data_df.iloc[1][0]
+
+    if sys.argv[2]:
+        cols = list(data_df.columns.values)
+        with open(sys.argv[2], 'r') as f:
+            restr = csv.reader(f)
+            i = 0
+            for row in restr:
+                for col in row:
+                    if col == "0":
+                        data_df = data_df.drop(labels=cols[i], axis=1)
+                    i += 1
+                    
     data_df = data_df.drop(labels=[0, 1])
     class_attr_values = data_df[class_attr].unique()
 
