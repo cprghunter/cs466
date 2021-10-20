@@ -8,11 +8,8 @@ res_file_name = 'decision_tree.json'
 def generate_data_subsets(df, k):
     data_subsets = []
     data_len = df.shape[0]
-    for i in range(0, k):
-        print(max(df.shape[0],int(data_len/k)))
-        print(len(df))
+    for i in range(0, k-1):
         subset = df.sample(n=max(df.shape[0],int(data_len/k)))
-        print(subset)
         data_subsets.append(subset)
         df = df.drop(subset.index)
     return data_subsets
@@ -30,7 +27,7 @@ def kfold(data_subsets, attributes, threshold, class_attr,
     for i in range(len(data_subsets)):
         test = data_subsets[i]
         training = get_training_dataset(i, data_subsets)
-
+        print(training)
         # produces json
         c45.c45_produce_json(training, attributes, threshold, class_attr,
                             class_labels, attr_domain_dict, res_file_name)
