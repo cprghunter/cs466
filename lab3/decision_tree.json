@@ -1,1 +1,1 @@
-{"dataset": "./data/nursery.csv", "leaf": {"decision": "not_recom", "p": 0.33290466392318246}}
+{"dataset": "./data/yellow-small+adult-stretch.csv", "node": {"var": "Age", "edges": [{"edge": {"value": "ADULT", "node": {"var": "Act", "edges": [{"edge": {"value": "STRETCH", "leaf": {"decision": "T", "p": 1}}}, {"edge": {"value": "DIP", "leaf": {"decision": "F", "p": 1}}}]}}}, {"edge": {"value": "CHILD", "leaf": {"decision": "F", "p": 1}}}]}}

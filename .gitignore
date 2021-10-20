@@ -3,3 +3,4 @@ lab2/authorlist.psv
 lab2/__pycache__/sparse_to_binary.cpython-38.pyc
 lab3/decisionTrees.ipynb
 lab3/decision_tree.json
+lab3/*.out
