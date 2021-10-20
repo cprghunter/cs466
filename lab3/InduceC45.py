@@ -127,11 +127,15 @@ def build_attr_domain_dict(df, attributes):
 def c45_produce_json(df, attributes, threshold, class_attr, 
                     class_labels, attr_domain_dict, res_file):
     tree = c45(df, attributes, threshold, class_attr, class_labels, attr_domain_dict)
-    tree_dict = {}
-    tree_dict["dataset"] = sys.argv[1]
-    tree_dict["node"] = tree.to_dict()
+    tree_dict = tree.to_dict()
+    out = {}
+    out["dataset"] = sys.argv[1]
+    if "decision" in tree_dict:
+        out["leaf"] = tree_dict
+    else:
+        out["node"] = tree_dict
     with open(res_file, 'w') as f:
-        f.write(json.dumps(tree_dict))
+        f.write(json.dumps(out))
 
 
 if __name__ == "__main__":

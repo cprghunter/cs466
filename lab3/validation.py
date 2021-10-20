@@ -50,7 +50,13 @@ def kfold(data_subsets, attributes, threshold, class_attr,
         for j in range(len(matrix_array[i])):
             for k in range(len(matrix_array[i])):
                 base_matrix.iat[j, k] += matrix_array[i].iat[j, k]
+        base_stats['total_correct'] += stats_array[i]['total_correct']
+        base_stats['total_incorrect'] += stats_array[i]['total_incorrect']
+        base_stats['accuracy'] += stats_array[i]['accuracy']
+        base_stats['err_rate'] += stats_array[i]['err_rate']
     print(base_matrix)
+    print(f"Total Correctly Classified: {base_stats['total_correct']/sum(len(ds) for ds in data_subsets)}")
+    print(f"Total Incorrectly Classified {}")
 
 def all_but_one(df, attributes, threshold, class_attr, 
           class_labels, attr_domain_dict): 
