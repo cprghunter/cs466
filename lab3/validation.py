@@ -28,6 +28,8 @@ def get_training_dataset(i, data_subsets):
 def kfold(data_subsets, attributes, threshold, class_attr, 
           class_labels, attr_domain_dict):
 
+    matrix_array = []
+    stats_array = []
     for i in range(len(data_subsets)):
         test = data_subsets[i]
         training = get_training_dataset(i, data_subsets)
@@ -39,6 +41,16 @@ def kfold(data_subsets, attributes, threshold, class_attr,
         # classify and generate statistics
         matrix, stats = c.classifier(test, res_file_name, use_column=class_attr, 
                                      outcomes=class_labels)
+        matrix_array.append(matrix)
+        stats_array.append(stats)
+    
+    base_matrix = matrix_array[0]
+    base_stats = stats_array[0]
+    for i in range(1, len(matrix_array)):
+        for j in range(len(matrix_array[i])):
+            for k in range(len(matrix_array[i])):
+                base_matrix.iat[j, k] += matrix_array[i].iat[j, k]
+    print(base_matrix)
 
 def all_but_one(df, attributes, threshold, class_attr, 
           class_labels, attr_domain_dict): 
