@@ -1,1 +1,1 @@
-{"dataset": "./data/adult-stretch.csv", "leaf": {"decision": "F", "p": 0.5}}
+{"dataset": "./data/adult-stretch.csv", "node": {"var": "Act", "edges": [{"edge": {"value": "STRETCH", "leaf": {"decision": "T", "p": 1}}}, {"edge": {"value": "DIP", "node": {"var": "Age", "edges": [{"edge": {"value": "ADULT", "leaf": {"decision": "T", "p": 1}}}, {"edge": {"value": "CHILD", "leaf": {"decision": "F", "p": 1}}}]}}}]}}

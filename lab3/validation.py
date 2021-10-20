@@ -2,6 +2,7 @@ import Classifier as c
 import InduceC45 as c45
 import sys
 import pandas
+import statistics as st
 
 res_file_name = 'decision_tree.json'
 
@@ -33,7 +34,6 @@ def kfold(data_subsets, attributes, threshold, class_attr,
     for i in range(len(data_subsets)):
         test = data_subsets[i]
         training = get_training_dataset(i, data_subsets)
-        print(training)
         # produces json
         c45.c45_produce_json(training, attributes, threshold, class_attr,
                             class_labels, attr_domain_dict, res_file_name)
@@ -46,31 +46,66 @@ def kfold(data_subsets, attributes, threshold, class_attr,
     
     base_matrix = matrix_array[0]
     base_stats = stats_array[0]
+    accuracies = []
+    for i in range(len(stats_array)):
+        accuracies.append(stats_array[i]['accuracy'])
+    avg_accuracy = st.mean(accuracies)
     for i in range(1, len(matrix_array)):
         for j in range(len(matrix_array[i])):
             for k in range(len(matrix_array[i])):
                 base_matrix.iat[j, k] += matrix_array[i].iat[j, k]
         base_stats['total_correct'] += stats_array[i]['total_correct']
         base_stats['total_incorrect'] += stats_array[i]['total_incorrect']
-        base_stats['accuracy'] += stats_array[i]['accuracy']
-        base_stats['err_rate'] += stats_array[i]['err_rate']
+
+    overall_acc = (base_stats['total_correct']/sum(len(ds) for ds in data_subsets))* 100
+    overall_err = (base_stats['total_incorrect']/sum(len(ds) for ds in data_subsets))* 100
+    print('\nRESULTS')
     print(base_matrix)
-    print(f"Total Correctly Classified: {base_stats['total_correct']/sum(len(ds) for ds in data_subsets)}")
-    print(f"Total Incorrectly Classified {}")
+    print(f"Overall Accuracy: {round(overall_acc, 4)}")
+    print(f"Overall Error Rate: {round(overall_err, 4)}")
+    print(f"Average Accuracy {avg_accuracy}")
+
 
 def all_but_one(df, attributes, threshold, class_attr, 
           class_labels, attr_domain_dict): 
 
+    matrix_array = []
+    stats_array = []
+    print(df)
     for i in range(len(df)):
-        test = df.loc[i]
-        train = df.drop(test)
+        test = df.iloc[i]
+        train = df.drop(labels=i+2, axis=0)
 
         # produces json
         c45.c45_produce_json(train, attributes, threshold, class_attr,
                             class_labels, attr_domain_dict, res_file_name)
 
         # classify and generate statistics
+        matrix, stats = c.classifier(test, res_file_name, use_column=class_attr, 
+                                     outcomes=class_labels)
+        matrix_array.append(matrix)
+        stats_array.append(stats)
+    
+    base_matrix = matrix_array[0]
+    base_stats = stats_array[0]
+    accuracies = []
+    for i in range(len(stats_array)):
+        accuracies.append(stats_array[i]['accuracy'])
+    avg_accuracy = st.mean(accuracies)
+    for i in range(1, len(matrix_array)):
+        for j in range(len(matrix_array[i])):
+            for k in range(len(matrix_array[i])):
+                base_matrix.iat[j, k] += matrix_array[i].iat[j, k]
+        base_stats['total_correct'] += stats_array[i]['total_correct']
+        base_stats['total_incorrect'] += stats_array[i]['total_incorrect']
 
+    overall_acc = (base_stats['total_correct']/sum(len(ds) for ds in data_subsets))* 100
+    overall_err = (base_stats['total_incorrect']/sum(len(ds) for ds in data_subsets))* 100
+    print('\nRESULTS')
+    print(base_matrix)
+    print(f"Overall Accuracy: {round(overall_acc, 4)}")
+    print(f"Overall Error Rate: {round(overall_err, 4)}")
+    print(f"Average Accuracy {avg_accuracy}")
 
 if __name__ == "__main__":
     if len(sys.argv) == 4:
@@ -87,9 +122,14 @@ if __name__ == "__main__":
     class_labels = df[class_attr].unique()
     attributes = [attr for attr in df.columns if not attr == class_attr]
     attr_domain_dict = c45.build_attr_domain_dict(df, attributes)
-    threshold = 0
+    threshold = 0.2
     
     if k > -1:
         data_subsets = generate_data_subsets(df, k)
         kfold(data_subsets, attributes, threshold, class_attr, class_labels, attr_domain_dict)
+    elif k == -1:
+        all_but_one(df, attributes, threshold, class_attr, 
+          class_labels, attr_domain_dict)
+    else:
+        pass
 
