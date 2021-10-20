@@ -1,0 +1,48 @@
+Actual \ Classified    p    e
+p                    736   18
+e                      0  870
+Total Classified: 1624
+Total Correctly Classified: 1606
+Total Incorrectly Classified 18
+Accuracy: 98.892%, Error Rate: 1.108%
+{'total_correct': 1606, 'total_incorrect': 18, 'accuracy': 98.892, 'err_rate': 1.108}
+Actual \ Classified    p    e
+p                    802    0
+e                      0  822
+Total Classified: 1624
+Total Correctly Classified: 1624
+Total Incorrectly Classified 0
+Accuracy: 100.0%, Error Rate: 0.0%
+{'total_correct': 1624, 'total_incorrect': 0, 'accuracy': 100.0, 'err_rate': 0.0}
+Actual \ Classified    p    e
+p                    829    4
+e                      0  791
+Total Classified: 1624
+Total Correctly Classified: 1620
+Total Incorrectly Classified 4
+Accuracy: 99.754%, Error Rate: 0.246%
+{'total_correct': 1620, 'total_incorrect': 4, 'accuracy': 99.754, 'err_rate': 0.246}
+Actual \ Classified    p    e
+p                    757    0
+e                      0  867
+Total Classified: 1624
+Total Correctly Classified: 1624
+Total Incorrectly Classified 0
+Accuracy: 100.0%, Error Rate: 0.0%
+{'total_correct': 1624, 'total_incorrect': 0, 'accuracy': 100.0, 'err_rate': 0.0}
+Actual \ Classified    p    e
+p                    728   42
+e                      2  856
+Total Classified: 1628
+Total Correctly Classified: 1584
+Total Incorrectly Classified 44
+Accuracy: 97.297%, Error Rate: 2.703%
+{'total_correct': 1584, 'total_incorrect': 44, 'accuracy': 97.297, 'err_rate': 2.703}
+
+RESULTS
+Actual \ Classified     p     e
+p                    3852    64
+e                       2  4206
+Overall Accuracy: 99.1876
+Overall Error Rate: 0.8124
+Average Accuracy 99.1886

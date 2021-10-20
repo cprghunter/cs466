@@ -1,0 +1,121 @@
+Actual \ Classified  recommend  priority  not_recom  very_recom  spec_prior
+recommend                    0         0          0           0           0
+priority                     0       346          0           0          60
+not_recom                    0         0        436           0           0
+very_recom                   0        26          0           0           0
+spec_prior                   0         1          0           0         427
+Total Classified: 1296
+Total Correctly Classified: 1209
+Total Incorrectly Classified 87
+Accuracy: 93.287%, Error Rate: 6.713%
+{'total_correct': 1209, 'total_incorrect': 87, 'accuracy': 93.287, 'err_rate': 6.713}
+Actual \ Classified  recommend  priority  not_recom  very_recom  spec_prior
+recommend                    0         0          0           0           0
+priority                     0         0        442           0           0
+not_recom                    0         0        427           0           0
+very_recom                   0         0         32           0           0
+spec_prior                   0         0        395           0           0
+Total Classified: 1296
+Total Correctly Classified: 427
+Total Incorrectly Classified 869
+Accuracy: 32.948%, Error Rate: 67.052%
+{'total_correct': 427, 'total_incorrect': 869, 'accuracy': 32.948, 'err_rate': 67.052}
+Actual \ Classified  recommend  priority  not_recom  very_recom  spec_prior
+recommend                    0         1          0           0           0
+priority                     0       399          0           0           0
+not_recom                    0       457          0           0           0
+very_recom                   0        33          0           0           0
+spec_prior                   0       406          0           0           0
+Total Classified: 1296
+Total Correctly Classified: 399
+Total Incorrectly Classified 897
+Accuracy: 30.787%, Error Rate: 69.213%
+{'total_correct': 399, 'total_incorrect': 897, 'accuracy': 30.787, 'err_rate': 69.213}
+Actual \ Classified  recommend  priority  not_recom  very_recom  spec_prior
+recommend                    0         0          0           0           0
+priority                     0         0        441           0           0
+not_recom                    0         0        400           0           0
+very_recom                   0         0         37           0           0
+spec_prior                   0         0        418           0           0
+Total Classified: 1296
+Total Correctly Classified: 400
+Total Incorrectly Classified 896
+Accuracy: 30.864%, Error Rate: 69.136%
+{'total_correct': 400, 'total_incorrect': 896, 'accuracy': 30.864, 'err_rate': 69.136}
+Actual \ Classified  recommend  priority  not_recom  very_recom  spec_prior
+recommend                    0         0          0           0           0
+priority                     0         0        436           0           0
+not_recom                    0         0        421           0           0
+very_recom                   0         0         30           0           0
+spec_prior                   0         0        409           0           0
+Total Classified: 1296
+Total Correctly Classified: 421
+Total Incorrectly Classified 875
+Accuracy: 32.485%, Error Rate: 67.515%
+{'total_correct': 421, 'total_incorrect': 875, 'accuracy': 32.485, 'err_rate': 67.515}
+Actual \ Classified  recommend  priority  not_recom  very_recom  spec_prior
+recommend                    0         0          1           0           0
+priority                     0         0        410           0           0
+not_recom                    0         0        447           0           0
+very_recom                   0         0         24           0           0
+spec_prior                   0         0        414           0           0
+Total Classified: 1296
+Total Correctly Classified: 447
+Total Incorrectly Classified 849
+Accuracy: 34.491%, Error Rate: 65.509%
+{'total_correct': 447, 'total_incorrect': 849, 'accuracy': 34.491, 'err_rate': 65.509}
+Actual \ Classified  recommend  priority  not_recom  very_recom  spec_prior
+recommend                    0         0          0           0           0
+priority                     0         0        436           0           0
+not_recom                    0         0        402           0           0
+very_recom                   0         0         35           0           0
+spec_prior                   0         0        423           0           0
+Total Classified: 1296
+Total Correctly Classified: 402
+Total Incorrectly Classified 894
+Accuracy: 31.019%, Error Rate: 68.981%
+{'total_correct': 402, 'total_incorrect': 894, 'accuracy': 31.019, 'err_rate': 68.981}
+Actual \ Classified  recommend  priority  not_recom  very_recom  spec_prior
+recommend                    0         0          0           0           0
+priority                     0         0        443           0           0
+not_recom                    0         0        439           0           0
+very_recom                   0         0         40           0           0
+spec_prior                   0         0        374           0           0
+Total Classified: 1296
+Total Correctly Classified: 439
+Total Incorrectly Classified 857
+Accuracy: 33.873%, Error Rate: 66.127%
+{'total_correct': 439, 'total_incorrect': 857, 'accuracy': 33.873, 'err_rate': 66.127}
+Actual \ Classified  recommend  priority  not_recom  very_recom  spec_prior
+recommend                    0         0          0           0           0
+priority                     0         0        422           0           0
+not_recom                    0         0        454           0           0
+very_recom                   0         0         32           0           0
+spec_prior                   0         0        388           0           0
+Total Classified: 1296
+Total Correctly Classified: 454
+Total Incorrectly Classified 842
+Accuracy: 35.031%, Error Rate: 64.969%
+{'total_correct': 454, 'total_incorrect': 842, 'accuracy': 35.031, 'err_rate': 64.969}
+Actual \ Classified  recommend  priority  not_recom  very_recom  spec_prior
+recommend                    0         0          0           0           0
+priority                     0         0        431           0           0
+not_recom                    0         0        437           0           0
+very_recom                   0         0         39           0           0
+spec_prior                   0         0        389           0           0
+Total Classified: 1296
+Total Correctly Classified: 437
+Total Incorrectly Classified 859
+Accuracy: 33.719%, Error Rate: 66.281%
+{'total_correct': 437, 'total_incorrect': 859, 'accuracy': 33.719, 'err_rate': 66.281}
+
+RESULTS
+Actual \ Classified  recommend  priority  not_recom  very_recom  spec_prior
+recommend                    0         1          1           0           0
+priority                     0       745       3461           0          60
+not_recom                    0       457       3863           0           0
+very_recom                   0        59        269           0           0
+spec_prior                   0       407       3210           0         427
+Overall Accuracy: 38.8503
+Overall Error Rate: 61.1497
+Average Accuracy 38.8504

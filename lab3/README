@@ -1,0 +1,15 @@
+Ryan Hunter (rghunter@calpoly.edu)
+Taylor Bedrosian (tbedrosi@calpoly.edu)
+
+Environment: We used Python3.8, but it should work on Python3.7 as well.
+Instructions:
+    For running InduceC45:
+    python3 InduceC45.py <TrainingSetFile.csv> [<restrictionsFile>]
+
+    For running Classifier
+    python3 Classifier.py <CSVFile> <JSONFile>
+
+    For running validation
+    python3 validation.py <TrainingSetFile.csv> [<restrictionsFile>] <K-fold value>
+    If you want to change the threshold for validation, line 125 of validation.py 
+    contains a float called "threshold" to adjust as desired.

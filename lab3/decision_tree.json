@@ -1,1 +1,1 @@
-{"dataset": "./data/adult-stretch.csv", "leaf": {"decision": "T", "p": 0.631578947368421}}
+{"dataset": "./data/nursery.csv", "leaf": {"decision": "not_recom", "p": 0.33290466392318246}}
