@@ -69,8 +69,14 @@ def traverse_tree(tree, row):
     if 'node' in tree.keys(): 
         find_edge = row[tree['node']['var']]
         for edge in tree['node']['edges']:
-            if edge['edge']['value'] == find_edge:
-                return traverse_tree(edge['edge'], row)
+            if 'direction' in edge['edge'].keys():
+                if (edge['edge']['direction'] == 'le') and (find_edge <= edge['edge']['value']):
+                    return traverse_tree(edge['edge'], row)
+                elif (edge['edge']['direction'] == 'gt') and (find_edge >= edge['edge']['value']):
+                    return traverse_tree(edge['edge'], row)
+            else:
+                if edge['edge']['value'] == find_edge:
+                    return traverse_tree(edge['edge'], row)
     else:
         return tree['leaf']['decision']
 
