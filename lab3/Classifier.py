@@ -3,7 +3,7 @@ import numpy as np
 import sys
 import json
 
-def classifier(dataset, tree, use_column=None, outcomes=None):
+def classifier(dataset, tree=None, use_column=None, outcomes=None):
     if type(dataset) == str:
         df = pd.read_csv(dataset)
         if not pd.isna(df.iloc[1,0]):
@@ -17,9 +17,11 @@ def classifier(dataset, tree, use_column=None, outcomes=None):
     else:
         df = dataset
         make_matrix = True
-    
-    open_tree = open(tree, 'r')
-    decision_tree = json.load(open_tree)
+    if type(tree) == str: 
+        open_tree = open(tree, 'r')
+        decision_tree = json.load(open_tree)
+    elif type(tree) == dict:
+        decision_tree = tree
     
     if make_matrix:
         confusion_matrix = pd.DataFrame(0, index=outcomes, columns=outcomes)

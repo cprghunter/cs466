@@ -66,6 +66,24 @@ def kfold(data_subsets, attributes, threshold, class_attr,
     print(f"Overall Error Rate: {round(overall_err, 4)}")
     print(f"Average Accuracy {avg_accuracy}")
 
+def combine_matrix_and_stats(matrix_array, stats_array, data_subsets):
+    base_matrix = matrix_array[0]
+    base_stats = stats_array[0]
+    accuracies = []
+    for i in range(len(stats_array)):
+        accuracies.append(stats_array[i]['accuracy'])
+    avg_accuracy = st.mean(accuracies)
+    for i in range(1, len(matrix_array)):
+        for j in range(len(matrix_array[i])):
+            for k in range(len(matrix_array[i])):
+                base_matrix.iat[j, k] += matrix_array[i].iat[j, k]
+        base_stats['total_correct'] += stats_array[i]['total_correct']
+        base_stats['total_incorrect'] += stats_array[i]['total_incorrect']
+    
+    overall_acc = (base_stats['total_correct']/sum(len(ds) for ds in data_subsets))* 100
+    overall_err = (base_stats['total_incorrect']/sum(len(ds) for ds in data_subsets))* 100
+    return base_matrix, base_stats, overall_acc, overall_err, avg_accuracy
+
 
 def all_but_one(df, attributes, threshold, class_attr, 
           class_labels, attr_domain_dict): 
@@ -133,11 +151,11 @@ if __name__ == "__main__":
                         df = df.drop(labels=cols[i], axis=1)
                     i += 1
 
+    attr_domain_size = {attr: df[attr].iloc[0] for attr in df.columns}  
     df = df.drop(labels=[0, 1])
-
     class_labels = df[class_attr].unique()
     attributes = [attr for attr in df.columns if not attr == class_attr]
-    attr_domain_dict = c45.build_attr_domain_dict(df, attributes)
+    attr_domain_dict = c45.build_attr_domain_dict(df, attributes, attr_domain_size)
     threshold = 0.27
     
     if k > 1:

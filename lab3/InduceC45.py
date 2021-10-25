@@ -175,7 +175,6 @@ def c45(df, attributes, threshold, class_attr, class_labels, attr_domain_dict):
 
         best_split, x = select_splitting_attribute(df, attributes, class_attr, class_labels,
                                                 attr_domain_dict, threshold)
-        print(f"attr: {best_split}, x: {x}")
         if not best_split: # case where all splits are below threshold
             return get_leaf_with_most_freq_class(df, class_attr)
         else:
@@ -226,12 +225,21 @@ def c45_produce_json(df, attributes, threshold, class_attr,
     with open(res_file, 'w') as f:
         f.write(json.dumps(out))
 
-if __name__ == "__main__":
-    data_df = pandas.read_csv(sys.argv[1], index_col=None)
-    # data_df[col][0] is number of values in the attributes domain
-    class_attr = data_df.iloc[1][0]
+def c45_get_tree_dict(df, attributes, threshold, class_attr, 
+        class_labels, attr_domain_dict):
+    tree = c45(df, attributes, threshold, class_attr, class_labels, attr_domain_dict)
+    tree_dict = tree.to_dict()
+    out = {}
+    out["dataset"] = sys.argv[1]
+    if "decision" in tree_dict:
+        out["leaf"] = tree_dict
+    else:
+        out["node"] = tree_dict
+    return out
 
-    if len(sys.argv) > 2:
+def preprocess_data(data_df, restr_file=None):
+    class_attr = data_df.iloc[1][0]
+    if restr_file:
         cols = list(data_df.columns.values)
         with open(sys.argv[2], 'r') as f:
             restr = csv.reader(f)
@@ -243,12 +251,28 @@ if __name__ == "__main__":
                     i += 1
     attr_domain_size = {attr: data_df[attr].iloc[0] for attr in data_df.columns}  
     data_df = data_df.drop(labels=[0, 1])
-    print(data_df[class_attr])
-    class_attr_values = data_df[class_attr].unique()
+    class_labels = data_df[class_attr].unique()
 
     attributes = [attr for attr in data_df.columns if not attr == class_attr]
     attr_domain_dict = build_attr_domain_dict(data_df, attributes, attr_domain_size)
 
+    return data_df, class_attr, class_labels, attributes, attr_domain_dict
+
+if __name__ == "__main__":
+    data_df = pandas.read_csv(sys.argv[1], index_col=None)
+    # data_df[col][0] is number of values in the attributes domain
+    """
+    class_attr = data_df.iloc[1][0]
+
+    attr_domain_size = {attr: data_df[attr].iloc[0] for attr in data_df.columns}  
+    data_df = data_df.drop(labels=[0, 1])
+    class_attr_values = data_df[class_attr].unique()
+
+    attributes = [attr for attr in data_df.columns if not attr == class_attr]
+    attr_domain_dict = build_attr_domain_dict(data_df, attributes, attr_domain_size)
+    """
+    data_df, class_attr, class_labels, attributes, attr_domain_dict = preprocess_data(data_df)
+
     #print(f"class attr: {class_attr}, class labels {class_attr_values}")
-    c45_produce_json(data_df, attributes, .12, class_attr, class_attr_values,
+    c45_produce_json(data_df, attributes, .3, class_attr, class_labels,
             attr_domain_dict, RES_FNAME)
