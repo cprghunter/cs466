@@ -73,7 +73,7 @@ def calculate_entropy(df, class_attr, class_labels, class_label_counts=None):
 def calculate_attribute_entropy(df, class_attr, class_labels, attr_domain, attr, 
                                 x=None):
     total = 0
-    if x:
+    if x != None:
         greater_than_x = df[df[attr] >= x]
         less_than_x = df[df[attr] < x]
         total += (len(greater_than_x) * calculate_entropy(greater_than_x,
@@ -127,7 +127,6 @@ def find_best_split(df, attribute, class_attr, class_labels, entropy_of_unsplit)
         if gain > max_gain:
             max_gain = gain
             max_gain_row = row
-    print(max_gain_row[attribute])
     return max_gain_row[attribute]
         
 def select_splitting_attribute(df, attributes, class_attr, class_labels, attr_domain_dict, threshold):
@@ -151,9 +150,12 @@ def select_splitting_attribute(df, attributes, class_attr, class_labels, attr_do
 
         info_gain = entropy_of_unsplit - attr_entropy
         gain[attribute] = info_gain
+
     max_gain = max(gain, key=gain.get)
     if not len(attr_domain_dict[max_gain]):
         x = cont_split[max_gain]
+    else:
+        x = None
     if gain[max_gain] > threshold:
         return max_gain, x
     return None, None
@@ -177,7 +179,7 @@ def c45(df, attributes, threshold, class_attr, class_labels, attr_domain_dict):
         if not best_split: # case where all splits are below threshold
             return get_leaf_with_most_freq_class(df, class_attr)
         else:
-            if not x: # non-continuous attibutes
+            if x == None: # non-continuous attibutes
                 node = Node(best_split)
                 attributes.remove(best_split)
                 for attr_value in attr_domain_dict[best_split]:
@@ -190,7 +192,6 @@ def c45(df, attributes, threshold, class_attr, class_labels, attr_domain_dict):
                                        copy.deepcopy(attributes), threshold, class_attr, class_labels,
                                        attr_domain_dict))
             else: # continuous attribute
-                print(f"cont attr {best_split}")
                 node = Node(best_split)
                 greater_than_x = df[df[best_split] >= x]
                 less_than_x = df[df[best_split] < x]
@@ -241,13 +242,13 @@ if __name__ == "__main__":
                         data_df = data_df.drop(labels=cols[i], axis=1)
                     i += 1
     attr_domain_size = {attr: data_df[attr].iloc[0] for attr in data_df.columns}  
-    print(attr_domain_size)
     data_df = data_df.drop(labels=[0, 1])
+    print(data_df[class_attr])
     class_attr_values = data_df[class_attr].unique()
 
     attributes = [attr for attr in data_df.columns if not attr == class_attr]
     attr_domain_dict = build_attr_domain_dict(data_df, attributes, attr_domain_size)
 
-    print(f"class labels {class_attr_values}")
-    c45_produce_json(data_df, attributes, .5, class_attr, class_attr_values,
+    #print(f"class attr: {class_attr}, class labels {class_attr_values}")
+    c45_produce_json(data_df, attributes, .12, class_attr, class_attr_values,
             attr_domain_dict, RES_FNAME)
