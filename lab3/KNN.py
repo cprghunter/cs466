@@ -62,10 +62,20 @@ def predict_k(dataset, k, target_row, use_column):
     distances = []
 
     to_sum=[]
+    to_dice=[]
     for i in target_row.keys():
         if i != use_column:
-            to_sum.append(np.square(pd.to_numeric(dataset[i])-float(target_row.at[i])))
-    new_df = pd.concat(to_sum, axis=1)
+            try:
+                to_sum.append(np.square(pd.to_numeric(dataset[i])-float(target_row.at[i])))
+            except:
+                to_dice.append(dataset[i].str.count(target_row.at[i]))
+                pass
+
+    new_df = pd.concat(to_sum, axis=1)    
+    if to_dice:
+        binary_concat = pd.concat(to_dice, axis=1)
+        dice_concat = 1-(np.sum(binary_concat, axis=1)/len(binary_concat.columns))
+        new_df = pd.concat([new_df, dice_concat], axis=1)
     distances.append(np.sqrt(np.sum(new_df, axis=1)))
     """
     for index, entry in dataset.iterrows():
