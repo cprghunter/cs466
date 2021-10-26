@@ -6,7 +6,11 @@ import validation as validate
 from collections import Counter
 import statistics as st
 
-def knn(dataset, k, test_data, use_column, outcomes):
+def knn(dataset, k, test_data, use_column, outcomes, normalize = False):
+
+    if normalize == True:
+        dataset = normalize_frame(dataset)
+        test_data = normalize_frame(test_data)
 
     confusion_matrix = pd.DataFrame(0, index=outcomes, columns=outcomes)
     confusion_matrix.columns.name = "Actual \\ Classified"
@@ -16,6 +20,16 @@ def knn(dataset, k, test_data, use_column, outcomes):
     print(stats)
     return result_matrix, stats
 
+def normalize_frame(df):
+    result = df
+    for feature_name in df.columns:
+        try:
+            max_value = pd.to_numeric(df[feature_name]).max()
+            min_value = pd.to_numeric(df[feature_name]).min()
+            result[feature_name] = (pd.to_numeric(df[feature_name])-min_value)/(max_value-min_value)
+        except:
+            pass
+    return result
 
 def calculate_stats(matrix, df):
     total_classified = len(df)
@@ -46,11 +60,22 @@ def fill_matrix(matrix, k, dataset, test_data, use_column):
 
 def predict_k(dataset, k, target_row, use_column):
     distances = []
+
     for index, entry in dataset.iterrows():
-        to_sum =[]
+        to_sum =[]    
+        matched_strings = 0
+        total_strings = 0
         for i in target_row.keys():
             if i != use_column:
-                to_sum.append(abs(float(entry.at[i]) - float(target_row.at[i])) ** 2)
+                try: 
+                    to_sum.append(abs(float(entry.at[i]) - float(target_row.at[i])) ** 2)
+                except:
+                    if entry.at[i] == target_row[i]:
+                        matched_strings += 1
+                    total_strings += 1
+        if total_strings > 0:
+            dice = matched_strings/total_strings
+            to_sum.append(dice)
         distances.append(math.sqrt(sum(to_sum)))
     
     #Now find most frequent result
@@ -61,7 +86,7 @@ def predict_k(dataset, k, target_row, use_column):
     c = Counter(k_neighbors)
     return(list(dict(c).keys())[0])
     
-def knn_validate(data_subsets, k, class_attr, class_labels):
+def knn_validate(data_subsets, k, class_attr, class_labels, normalize):
     matrix_array = []
     stats_array = []
     for i in range(len(data_subsets)):
@@ -69,7 +94,7 @@ def knn_validate(data_subsets, k, class_attr, class_labels):
         training = validate.get_training_dataset(i, data_subsets)
 
         # classify and generate statistics
-        matrix, stats = knn(training, k, test, class_attr, class_labels)
+        matrix, stats = knn(training, k, test, class_attr, class_labels, normalize)
         matrix_array.append(matrix)
         stats_array.append(stats)
     
@@ -97,9 +122,9 @@ def knn_validate(data_subsets, k, class_attr, class_labels):
 if __name__ == '__main__':
     df = pd.read_csv(sys.argv[1])
     k = int(sys.argv[2])
-
+    normalize = bool(int(sys.argv[3]))
     class_attr = df.iloc[1][0]
     df = df.drop(labels=[0, 1])
     class_labels = df[class_attr].unique()    
-    test_data = validate.generate_data_subsets(df, 50) #10-fold validation
-    knn_validate(test_data, k, class_attr, class_labels)
+    test_data = validate.generate_data_subsets(df, 10) #10-fold validation
+    knn_validate(test_data, k, class_attr, class_labels, normalize)
