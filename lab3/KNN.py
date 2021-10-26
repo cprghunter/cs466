@@ -68,8 +68,10 @@ def predict_k(dataset, k, target_row, use_column):
             try:
                 to_sum.append(np.square(pd.to_numeric(dataset[i])-float(target_row.at[i])))
             except:
-                to_dice.append(dataset[i].str.count(target_row.at[i]))
-                pass
+                try:
+                    to_dice.append(dataset[i].str.count(target_row.at[i]))
+                except:
+                    pass
 
     new_df = pd.concat(to_sum, axis=1)    
     if to_dice:
@@ -142,6 +144,8 @@ if __name__ == '__main__':
     normalize = bool(int(sys.argv[3]))
     class_attr = df.iloc[1][0]
     df = df.drop(labels=[0, 1])
-    class_labels = df[class_attr].unique()    
+    class_labels = df[class_attr].unique()
+    df.dropna(inplace=True)    
+    print(df)
     test_data = validate.generate_data_subsets(df, 10) #10-fold validation
     knn_validate(test_data, k, class_attr, class_labels, normalize)
