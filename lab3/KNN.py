@@ -146,6 +146,5 @@ if __name__ == '__main__':
     df = df.drop(labels=[0, 1])
     class_labels = df[class_attr].unique()
     df.dropna(inplace=True)    
-    print(df)
     test_data = validate.generate_data_subsets(df, 10) #10-fold validation
     knn_validate(test_data, k, class_attr, class_labels, normalize)
