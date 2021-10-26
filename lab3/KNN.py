@@ -61,6 +61,13 @@ def fill_matrix(matrix, k, dataset, test_data, use_column):
 def predict_k(dataset, k, target_row, use_column):
     distances = []
 
+    to_sum=[]
+    for i in target_row.keys():
+        if i != use_column:
+            to_sum.append(np.square(pd.to_numeric(dataset[i])-float(target_row.at[i])))
+    new_df = pd.concat(to_sum, axis=1)
+    distances.append(np.sqrt(np.sum(new_df, axis=1)))
+    """
     for index, entry in dataset.iterrows():
         to_sum =[]    
         matched_strings = 0
@@ -77,11 +84,11 @@ def predict_k(dataset, k, target_row, use_column):
             dice = matched_strings/total_strings
             to_sum.append(dice)
         distances.append(math.sqrt(sum(to_sum)))
-    
+    """
     #Now find most frequent result
     argray = np.argsort(distances).tolist()
     k_neighbors = []
-    for i in argray[0:k]:
+    for i in argray[0][0:k]:
         k_neighbors.append(dataset.iloc[i][use_column])
     c = Counter(k_neighbors)
     return(list(dict(c).keys())[0])
