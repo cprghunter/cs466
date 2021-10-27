@@ -28,7 +28,7 @@ def get_training_dataset(i, data_subsets):
     return df
 
 def kfold(data_subsets, attributes, threshold, class_attr, 
-          class_labels, attr_domain_dict):
+          class_labels, attr_domain_dict, gr=False):
 
     matrix_array = []
     stats_array = []
@@ -37,7 +37,7 @@ def kfold(data_subsets, attributes, threshold, class_attr,
         training = get_training_dataset(i, data_subsets)
         # produces json
         c45.c45_produce_json(training, attributes, threshold, class_attr,
-                            class_labels, attr_domain_dict, res_file_name)
+                            class_labels, attr_domain_dict, res_file_name, gr=gr)
 
         # classify and generate statistics
         matrix, stats = c.classifier(test, res_file_name, use_column=class_attr, 
@@ -86,7 +86,7 @@ def combine_matrix_and_stats(matrix_array, stats_array, data_subsets):
 
 
 def all_but_one(df, attributes, threshold, class_attr, 
-          class_labels, attr_domain_dict): 
+          class_labels, attr_domain_dict, gr=False): 
 
     matrix_array = []
     stats_array = []
@@ -97,7 +97,7 @@ def all_but_one(df, attributes, threshold, class_attr,
 
         # produces json
         c45.c45_produce_json(train, attributes, threshold, class_attr,
-                            class_labels, attr_domain_dict, res_file_name)
+                            class_labels, attr_domain_dict, res_file_name, gr=gr)
 
         # classify and generate statistics
         matrix, stats = c.classifier(test, res_file_name, use_column=class_attr, 
@@ -156,13 +156,14 @@ if __name__ == "__main__":
     class_labels = df[class_attr].unique()
     attributes = [attr for attr in df.columns if not attr == class_attr]
     attr_domain_dict = c45.build_attr_domain_dict(df, attributes, attr_domain_size)
-    threshold = 0.27
+    threshold = 0.06
+    gr = False
     
     if k > 1:
         data_subsets = generate_data_subsets(df, k)
-        kfold(data_subsets, attributes, threshold, class_attr, class_labels, attr_domain_dict)
+        kfold(data_subsets, attributes, threshold, class_attr, class_labels, attr_domain_dict, gr=gr)
     elif k == -1:
         all_but_one(df, attributes, threshold, class_attr, 
-          class_labels, attr_domain_dict)
+          class_labels, attr_domain_dict, gr=gr)
     else:
         pass

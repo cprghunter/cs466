@@ -4,8 +4,11 @@ import copy
 import sys
 import math
 import json
+import numpy
+import warnings
 
-RES_FNAME = "decision_tree.json"
+RES_FNAME = "letter_decision_tree.json"
+warnings.filterwarnings('ignore')
 
 class Leaf:
     def __init__(self, class_label, percent):
@@ -58,17 +61,31 @@ class Node:
         json_dict["edges"] = edge_list
         return json_dict
 
-
-def calculate_entropy(df, class_attr, class_labels, class_label_counts=None):
+def calculate_entropy(df, class_attr, class_labels, class_label_counts=0, df_size=0):
     entropy = 0
-    if not class_label_counts:
+    if type(class_label_counts) == int:
         class_label_counts = df[class_attr].value_counts()
     for class_label in class_labels:
         if class_label in class_label_counts:
-            prob = class_label_counts[class_label] / df.shape[0]
+            if df_size > 0:
+                prob = class_label_counts[class_label] / df_size
+            else:
+                prob = class_label_counts[class_label] / df.shape[0]
             if prob != 0:
                 entropy += prob * math.log2(prob)
     return -1 * entropy
+
+def calculate_split_entropy_weighted(counts, class_attr, size):
+    df_size = counts.sum()
+    entropy = 0
+    if df_size == 0:
+        return 0
+    for count in counts:
+        prob = count / df_size
+        if prob != 0:
+            entropy += prob * math.log2(prob) 
+    entropy = (-1 * entropy * df_size) / size
+    return entropy
 
 def calculate_attribute_entropy(df, class_attr, class_labels, attr_domain, attr, 
                                 x=None):
@@ -76,10 +93,10 @@ def calculate_attribute_entropy(df, class_attr, class_labels, attr_domain, attr,
     if x != None:
         greater_than_x = df[df[attr] >= x]
         less_than_x = df[df[attr] < x]
-        total += (len(greater_than_x) * calculate_entropy(greater_than_x,
+        total += (greater_than_x.shape[0] * calculate_entropy(greater_than_x,
                                                           class_attr,
                                                           class_labels) / df.shape[0])
-        total += (len(less_than_x) * calculate_entropy(less_than_x,
+        total += (less_than_x.shape[0] * calculate_entropy(less_than_x,
                                                           class_attr,
                                                           class_labels) / df.shape[0])
         return total
@@ -91,45 +108,47 @@ def calculate_attribute_entropy(df, class_attr, class_labels, attr_domain, attr,
                                             class_attr, class_labels) / df.shape[0])
     return total
 
+def get_counts_diff(value_counts, total_counts):
+    return total_counts.subtract(value_counts) 
+
+def get_total_entropy(left_entr, right_entr, size):
+    for i in range(len(left_entr)):
+        (left_entr[i][1] * left_entr[i][0] / size) + (right_entr[i][1] * right_entr[i][0] / size)
+
 def find_best_split(df, attribute, class_attr, class_labels, entropy_of_unsplit):
-    sorted_df = df.sort_values(attribute, ignore_index=True)
-    max_gain = None
-    max_gain_row = None
+    sorted_df = df.sort_values(by=attribute, ignore_index=True) 
+    size = sorted_df.shape[0]
+    totals = df[class_attr].value_counts()
+    attr_df = sorted_df[attribute].unique()
+    minim = attr_df.min
+    possible_splits = numpy.array([split for split in attr_df if split != minim])
+    if len(possible_splits) == 0:
+        return attr_df[0], 0, entropy_of_unsplit
     """
-    counts = {label : [0 for _ in range(len(sorted_df))] for label in class_labels} 
+    left_side_counts = []
+    left_side_counts.append(pandas.Series({label: 0 for label in class_labels}))
     for idx, row in sorted_df.iterrows():
         if idx == 0:
             continue
-        for class_label in class_labels:
-            if row[class_attr] == class_label: 
-                counts[class_label][idx] = counts[class_label][idx - 1] + 1
-            else:
-                counts[class_label][idx] = counts[class_label][idx - 1]
-    for idx, row in sorted_df.iterrows():
-        alpha_counts = {class_label: counts[class_label][idx] 
-                                            for class_label in class_labels}
-        #print(f"{attribute}: split on {row[attribute]}: {alpha_counts}")
-        gain = entropy_of_unsplit - calculate_entropy(sorted_df, class_attr, 
-                                            class_labels, class_label_counts=alpha_counts)
-        if idx == 0:
-            max_gain = gain
-            max_gain_row = row
-        if gain > max_gain:
-            max_gain = gain
-            max_gain_row = row
+        new = left_side_counts[idx - 1].copy(deep=True)
+        new[row[class_attr]] += 1
+        left_side_counts.append(new)
     """
-    for idx, row in sorted_df.iterrows():
-        gain = entropy_of_unsplit - calculate_attribute_entropy(sorted_df, class_attr, 
-                                            class_labels, {}, attribute, x=row[attribute])
-        if idx == 0:
-            max_gain = gain
-            max_gain_row = row
-        if gain > max_gain:
-            max_gain = gain
-            max_gain_row = row
-    return max_gain_row[attribute]
+
+    left_side_counts = numpy.array([sorted_df[sorted_df[attribute] < split][class_attr].value_counts() for split in possible_splits])
+    right_side_counts = numpy.array([totals.subtract(count, fill_value=0) for count in left_side_counts])
+
+    left_entr = [calculate_split_entropy_weighted(count, class_attr, size) for count in left_side_counts]
+    right_entr = [calculate_split_entropy_weighted(count, class_attr, size) for count in right_side_counts]
+    left = numpy.array(left_entr)
+    right = numpy.array(right_entr)
+    entr = left + right
+    info_gain = numpy.array(entropy_of_unsplit - (left + right))
+    max_ent = numpy.amax(info_gain)
+    best_split = possible_splits[numpy.where(info_gain == max_ent)]
+    return best_split[0], max_ent, numpy.amax(entr)
         
-def select_splitting_attribute(df, attributes, class_attr, class_labels, attr_domain_dict, threshold):
+def select_splitting_attribute(df, attributes, class_attr, class_labels, attr_domain_dict, threshold, gr=False):
     entropy_of_unsplit = calculate_entropy(df, class_attr, class_labels)
     gain = {}
     cont_split = {}
@@ -139,17 +158,22 @@ def select_splitting_attribute(df, attributes, class_attr, class_labels, attr_do
             attr_entropy = calculate_attribute_entropy(df, class_attr, 
                                                         class_labels, 
                                                         attr_domain_dict[attribute],
-                                                        attribute)
+                                                        attribute) 
+            info_gain = entropy_of_unsplit - attr_entropy
         else: # continuous attributes
-            x = find_best_split(df, attribute, class_attr, class_labels, entropy_of_unsplit)
+            x, info_gain, attr_entropy = find_best_split(df, attribute, class_attr, class_labels, entropy_of_unsplit)
+            """
             attr_entropy = calculate_attribute_entropy(df, class_attr, 
                                                         class_labels, 
                                                         attr_domain_dict[attribute],
                                                         attribute, x=x)
+            """
             cont_split[attribute] = x
 
-        info_gain = entropy_of_unsplit - attr_entropy
-        gain[attribute] = info_gain
+        if gr:
+            gain[attribute] = info_gain / attr_entropy
+        else:
+            gain[attribute] = info_gain
 
     max_gain = max(gain, key=gain.get)
     if not len(attr_domain_dict[max_gain]):
@@ -157,6 +181,7 @@ def select_splitting_attribute(df, attributes, class_attr, class_labels, attr_do
     else:
         x = None
     if gain[max_gain] > threshold:
+        print(max_gain, x, gain[max_gain])
         return max_gain, x
     return None, None
 
@@ -164,7 +189,7 @@ def get_leaf_with_most_freq_class(df, class_attr):
     most_freq = df[class_attr].mode()
     return Leaf(most_freq[0], len(df.loc[df[class_attr] == most_freq[0]]) / len(df))
 
-def c45(df, attributes, threshold, class_attr, class_labels, attr_domain_dict):
+def c45(df, attributes, threshold, class_attr, class_labels, attr_domain_dict, gr=False):
     if len(unique := df[class_attr].unique()) == 1:
         return Leaf(unique[0], 1) 
     elif not attributes:
@@ -174,7 +199,8 @@ def c45(df, attributes, threshold, class_attr, class_labels, attr_domain_dict):
     else:
 
         best_split, x = select_splitting_attribute(df, attributes, class_attr, class_labels,
-                                                attr_domain_dict, threshold)
+                                                attr_domain_dict, threshold, gr=gr)
+        print(best_split, x)
         if not best_split: # case where all splits are below threshold
             return get_leaf_with_most_freq_class(df, class_attr)
         else:
@@ -189,17 +215,17 @@ def c45(df, attributes, threshold, class_attr, class_labels, attr_domain_dict):
                         node.add_child(attr_value, 
                                        c45(df.loc[df[best_split] == attr_value],
                                        copy.deepcopy(attributes), threshold, class_attr, class_labels,
-                                       attr_domain_dict))
+                                       attr_domain_dict, gr=gr))
             else: # continuous attribute
                 node = Node(best_split)
                 greater_than_x = df[df[best_split] >= x]
                 less_than_x = df[df[best_split] < x]
                 node.add_child(x, c45(greater_than_x, copy.deepcopy(attributes),
                                       threshold, class_attr, class_labels,
-                                      attr_domain_dict), gt_le="gt")
+                                      attr_domain_dict, gr=gr), gt_le="gt")
                 node.add_child(x, c45(less_than_x, copy.deepcopy(attributes),
                                       threshold, class_attr, class_labels,
-                                      attr_domain_dict), gt_le="le")
+                                      attr_domain_dict, gr=gr), gt_le="le")
 
             return node
 
@@ -213,8 +239,8 @@ def build_attr_domain_dict(df, attributes, attr_domain_size):
     return attr_domain
 
 def c45_produce_json(df, attributes, threshold, class_attr, 
-                    class_labels, attr_domain_dict, res_file):
-    tree = c45(df, attributes, threshold, class_attr, class_labels, attr_domain_dict)
+                    class_labels, attr_domain_dict, res_file, gr=False):
+    tree = c45(df, attributes, threshold, class_attr, class_labels, attr_domain_dict, gr=gr)
     tree_dict = tree.to_dict()
     out = {}
     out["dataset"] = sys.argv[1]
@@ -226,8 +252,8 @@ def c45_produce_json(df, attributes, threshold, class_attr,
         f.write(json.dumps(out))
 
 def c45_get_tree_dict(df, attributes, threshold, class_attr, 
-        class_labels, attr_domain_dict):
-    tree = c45(df, attributes, threshold, class_attr, class_labels, attr_domain_dict)
+        class_labels, attr_domain_dict, gr=False):
+    tree = c45(df, attributes, threshold, class_attr, class_labels, attr_domain_dict, gr=gr)
     tree_dict = tree.to_dict()
     out = {}
     out["dataset"] = sys.argv[1]
@@ -272,7 +298,8 @@ if __name__ == "__main__":
     attr_domain_dict = build_attr_domain_dict(data_df, attributes, attr_domain_size)
     """
     data_df, class_attr, class_labels, attributes, attr_domain_dict = preprocess_data(data_df)
-
+    threshold = 1
+    gr = True
     #print(f"class attr: {class_attr}, class labels {class_attr_values}")
-    c45_produce_json(data_df, attributes, .3, class_attr, class_labels,
-            attr_domain_dict, RES_FNAME)
+    c45_produce_json(data_df, attributes, threshold, class_attr, class_labels,
+            attr_domain_dict, RES_FNAME, gr=gr)

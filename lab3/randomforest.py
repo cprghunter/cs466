@@ -21,7 +21,7 @@ def select_random_attributes(attributes, attr_domain_dict, m):
     new_domain_dict = {attr: attr_domain_dict[attr] for attr in selected_attributes}
     return selected_attributes, new_domain_dict
 
-def generate_forest(df, class_attr, class_labels, attributes, attr_domain_dict, threshold, k, m, n):
+def generate_forest(df, class_attr, class_labels, attributes, attr_domain_dict, threshold, k, m, n, gr=False):
     forest = []
     for _ in range(n):
         selected_df = get_random_data_subset(df, k)
@@ -29,7 +29,7 @@ def generate_forest(df, class_attr, class_labels, attributes, attr_domain_dict, 
                                                              attr_domain_dict,
                                                              m)
         forest.append(c45.c45_get_tree_dict(selected_df, selected_attr, threshold, class_attr, 
-                                            class_labels, selected_attr_domain_dict))
+                                            class_labels, selected_attr_domain_dict, gr=gr))
     return forest
 
 def get_forest_prediction(forest, data_point, class_labels):
@@ -56,11 +56,14 @@ if __name__ == "__main__":
     data_subsets = validate.generate_data_subsets(df, 10)
     matrix_array = []
     stats_array = []
+    threshold = 0.06
+    gr = True
     for i in range(len(data_subsets)):
         test = data_subsets[i]
         training = validate.get_training_dataset(i, data_subsets)
         forest = generate_forest(training, class_attr, class_labels, attributes, attr_domain_dict,
-                                 0.3, int(args.numdataset), int(args.numattributes), int(args.numtrees))
+                                 threshold, int(args.numdataset), int(args.numattributes), int(args.numtrees),
+                                 gr=gr)
         matrix = predict_on_dataset(test, forest, class_attr, class_labels)
         stats = classify.calculate_stats(matrix, test)
         matrix_array.append(matrix)
