@@ -120,7 +120,7 @@ def find_best_split(df, attribute, class_attr, class_labels, entropy_of_unsplit)
     size = sorted_df.shape[0]
     totals = df[class_attr].value_counts()
     attr_df = sorted_df[attribute].unique()
-    minim = attr_df.min
+    minim = attr_df.min()
     possible_splits = numpy.array([split for split in attr_df if split != minim])
     if len(possible_splits) == 0:
         return attr_df[0], 0, entropy_of_unsplit
@@ -136,7 +136,10 @@ def find_best_split(df, attribute, class_attr, class_labels, entropy_of_unsplit)
     """
 
     left_side_counts = numpy.array([sorted_df[sorted_df[attribute] < split][class_attr].value_counts() for split in possible_splits])
-    right_side_counts = numpy.array([totals.subtract(count, fill_value=0) for count in left_side_counts])
+    try:
+        right_side_counts = numpy.array([totals.subtract(count, fill_value=0) for count in left_side_counts])
+    except:
+        return attr_df[0], 0, entropy_of_unsplit
 
     left_entr = [calculate_split_entropy_weighted(count, class_attr, size) for count in left_side_counts]
     right_entr = [calculate_split_entropy_weighted(count, class_attr, size) for count in right_side_counts]
@@ -181,7 +184,6 @@ def select_splitting_attribute(df, attributes, class_attr, class_labels, attr_do
     else:
         x = None
     if gain[max_gain] > threshold:
-        print(max_gain, x, gain[max_gain])
         return max_gain, x
     return None, None
 
@@ -200,7 +202,6 @@ def c45(df, attributes, threshold, class_attr, class_labels, attr_domain_dict, g
 
         best_split, x = select_splitting_attribute(df, attributes, class_attr, class_labels,
                                                 attr_domain_dict, threshold, gr=gr)
-        print(best_split, x)
         if not best_split: # case where all splits are below threshold
             return get_leaf_with_most_freq_class(df, class_attr)
         else:
