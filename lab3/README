@@ -6,10 +6,17 @@ Instructions:
     For running InduceC45:
     python3 InduceC45.py <TrainingSetFile.csv> [<restrictionsFile>]
 
-    For running Classifier
+    For running Classifier:
     python3 Classifier.py <CSVFile> <JSONFile>
 
-    For running validation
+    For running validation:
     python3 validation.py <TrainingSetFile.csv> [<restrictionsFile>] <K-fold value>
     If you want to change the threshold for validation, line 125 of validation.py 
     contains a float called "threshold" to adjust as desired.
+
+    For running randomforest:
+    python3 randomforest.py -d <TrainingSetFile.csv> -n numTrees -m numAttributes -k numDataPoints
+
+    For running KNN:
+    python3 KNN.py <TrainingSetFile.csv> k <normalize[0, 1]>
+    0 means do not normalize, 1 means normalize numerical columns
