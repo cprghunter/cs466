@@ -1,6 +1,8 @@
 import pandas
 import argparse
 import numpy as np
+from collections import defaultdict
+import matplotlib.pyplot as plt
 
 def density_connected(point_idx, e_neighborhoods, cores, cluster_labels, label):
     for neighbor_idx in e_neighborhoods[point_idx]:
@@ -14,11 +16,16 @@ def calculate_e_neighborhood(datapoint, df, e):
     dists = np.linalg.norm(np.add(-np.array(datapoint),df), axis=1)
     return np.where(dists <= e)[0]
 
+def plot_clusters(df, cluster_labels):
+    plt.scatter(df[df.columns[0]], df[df.columns[1]], c=cluster_labels)
+    plt.show()
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("-d", "--datafile", required=True)
     parser.add_argument("-e", "--epsilon", required=True, type=float)
     parser.add_argument("-n", "--numpoints", required=True, type=int)
+    parser.add_argument("-p", "--plot", action="store_true")
     args = parser.parse_args()
 
     df = pandas.read_csv(args.datafile)
@@ -40,3 +47,5 @@ if __name__ == "__main__":
             current_cluster += 1
 
     print(cluster_labels)
+    if args.plot:
+        plot_clusters(df, cluster_labels)
