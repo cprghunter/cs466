@@ -4,6 +4,7 @@ import matplotlib.pyplot as plt
 import argparse
 import random
 from dbscan import plot_clusters
+import utils
 
 
 def parse_args():
@@ -59,7 +60,7 @@ def recompute_centroids(df, centroid_df, k):
 
 if __name__ == "__main__":
     args = parse_args()
-    df = pd.read_csv(args.datafile)
+    df = utils.parse_csv(args.datafile)
 
     centroids, centroid_df = select_initial_centroids(df, args.k)
     centroid_df_new, lbls = recompute_centroids(df, centroid_df, args.k)

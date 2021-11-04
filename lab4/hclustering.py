@@ -3,12 +3,14 @@ import numpy as np
 import matplotlib.pyplot as plt
 import argparse
 import json
+import utils
 
 def parse_args():
     parser = argparse.ArgumentParser()
     parser.add_argument("-d", "--datafile", required=True)
     parser.add_argument("-p", "--plot", action="store_true")
     parser.add_argument("-t", "--threshold", required=True, type=float, help="threshold for stopping")
+    parser.add_argument("-e", "--eval", action="store_true", help="evaluate with many different thresholds")
     
     args = parser.parse_args()
 
@@ -70,18 +72,15 @@ def get_cluster_labels(df, clusters):
     cluster_labels = [None for i,_ in df.iterrows()]
     for i, fset in enumerate(clusters): 
         for idx in fset:
-            cluster_labels[idx] = i
+            cluster_labels[df.index.get_loc(idx)] = i
     return cluster_labels
 
 def plot_clusters(df, cluster_labels):
     plt.scatter(df[df.columns[0]], df[df.columns[1]], c=cluster_labels)
     plt.show()
 
-if __name__ == "__main__":
-    args = parse_args()
-    df = pd.read_csv(args.datafile)
+def hcluster(df, threshold):
     max_idx = len(df)
-
     clusters = {idx: frozenset({idx}) for idx, _ in df.iterrows()}
     clusters_by_dist = {}
     clusters_by_dist[0] = frozenset(clusters.values())
@@ -98,20 +97,29 @@ if __name__ == "__main__":
         mindist = dist_df.where(dist_df != 0).stack().idxmin() 
         max_idx, centroid_df = combine_clusters(mindist, clusters, clusters_by_dist, centroid_df, max_idx, df, dist_df, joined)
     
-    if args.threshold in clusters_by_dist:
-        plot_clusters(df, get_cluster_labels(df, clusters_by_dist[args.threshold]))
-        print(clusters_by_dist[args.threshold])
-    else:
-        sorted_keys = list(sorted(clusters_by_dist.keys()))
-        for i, key in enumerate(sorted_keys):
-            if key > args.threshold:
-                max_dist_threshold_cluster = clusters_by_dist[sorted_keys[i - 1]]
-                break
+    sorted_keys = list(sorted(clusters_by_dist.keys()))
+    max_dist_threshold_cluster = clusters_by_dist[sorted_keys[len(sorted_keys)-1]]
+    for i, key in enumerate(sorted_keys):
+        if key > threshold:
+            max_dist_threshold_cluster = clusters_by_dist[sorted_keys[i - 1]]
+            break
+    
+    c = clusters_by_dist[sorted_keys.pop()]
+    tree = construct_tree(df, joined, list(c)[0])
+    with open('tree.json', 'w+') as f:
+        json.dump(tree, f) 
 
-        plot_clusters(df, get_cluster_labels(df, max_dist_threshold_cluster))
-        print(max_dist_threshold_cluster)
+    cluster_labels =  get_cluster_labels(df, max_dist_threshold_cluster) 
+    return cluster_labels
+ 
+if __name__ == "__main__":
+    args = parse_args()
+    df = utils.parse_csv(args.datafile) 
 
-        c = clusters_by_dist[sorted_keys.pop()]
-        tree = construct_tree(df, joined, list(c)[0])
-        with open('tree.json', 'w+') as f:
-            json.dump(tree, f) 
+    if args.eval:
+        pass
+    cluster_labels = hcluster(df, args.threshold)
+    if args.plot:
+        plot_clusters(df,cluster_labels)
+    
+    utils.print_cluster_stats(df, utils.collect_clusters(df, cluster_labels))

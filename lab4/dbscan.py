@@ -3,6 +3,7 @@ import argparse
 import numpy as np
 from collections import defaultdict
 import matplotlib.pyplot as plt
+import utils
 
 def density_connected(point_idx, e_neighborhoods, cores, cluster_labels, label):
     for neighbor_idx in e_neighborhoods[point_idx]:
@@ -28,7 +29,7 @@ if __name__ == "__main__":
     parser.add_argument("-p", "--plot", action="store_true")
     args = parser.parse_args()
 
-    df = pandas.read_csv(args.datafile)
+    df = utils.parse_csv(args.datafile)
 
     e_neighborhoods = {}
     cluster_labels = []
