@@ -1,6 +1,7 @@
 import pandas as pd
 import numpy as np
 from collections import defaultdict
+import matplotlib.pyplot as plt
 
 def collect_clusters(df, labels) -> dict[int, pd.Series]:
     clusters = defaultdict(lambda: set())
@@ -82,6 +83,12 @@ def distance_matrix(df1, df2):
 
 def total_sse(df, clusters):
     return np.sum([calculate_sse(df, cluster, calculate_centroid(cluster, df)) for _, cluster in clusters.items()])
+
+def plot_clusters_3d(df, lbls):
+    fig = plt.figure()
+    ax = fig.add_subplot(projection='3d')
+    ax.scatter(df[df.columns[0]], df[df.columns[1]], df[df.columns[2]], c=lbls)
+    plt.show()
 
 def silhouette(df, clusters):
     centroids = [calculate_centroid(cluster, df) for lbl, cluster in sorted(clusters.items())]
