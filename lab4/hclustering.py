@@ -11,6 +11,10 @@ def parse_args():
     parser.add_argument("-p", "--plot", action="store_true")
     parser.add_argument("-t", "--threshold", required=True, type=float, help="threshold for stopping")
     parser.add_argument("-e", "--eval", action="store_true", help="evaluate with many different thresholds")
+    parser.add_argument("-f", "--try_params", action="store_true")
+    parser.add_argument("-min_t", "--min_t", type=float)
+    parser.add_argument("-max_t", "--max_t", type=float)
+    parser.add_argument("-purity", "--purity", action="store_true")
     
     args = parser.parse_args()
 
@@ -79,6 +83,20 @@ def plot_clusters(df, cluster_labels):
     plt.scatter(df[df.columns[0]], df[df.columns[1]], c=cluster_labels)
     plt.show()
 
+def create_t_sse_plot(df, min_t, max_t, increments):
+    x = []
+    y = []
+    for i in range(1,increments):
+        t = (increments-i) * (max_t - min_t)/increments
+        x.append(t)
+        lbls = hcluster(df, t)
+        sse = utils.total_sse(df, utils.collect_clusters(df, lbls))
+        y.append(sse)
+    plt.xlabel('threshold')
+    plt.ylabel('Total SSE') 
+    plt.plot(x, y)
+    plt.show()
+
 def hcluster(df, threshold):
     max_idx = len(df)
     clusters = {idx: frozenset({idx}) for idx, _ in df.iterrows()}
@@ -112,14 +130,20 @@ def hcluster(df, threshold):
     cluster_labels =  get_cluster_labels(df, max_dist_threshold_cluster) 
     return cluster_labels
  
-if __name__ == "__main__":
+def main():
     args = parse_args()
-    df = utils.parse_csv(args.datafile) 
+    df_data, df_labels = utils.parse_csv(args.datafile) 
 
-    if args.eval:
-        pass
-    cluster_labels = hcluster(df, args.threshold)
+    if args.try_params:
+        create_t_sse_plot(df_data, args.min_t, args.max_t, 50)
+        
+    cluster_labels = hcluster(df_data, args.threshold)
     if args.plot:
-        plot_clusters(df,cluster_labels)
+        plot_clusters(df_data,cluster_labels)
     
-    utils.print_cluster_stats(df, utils.collect_clusters(df, cluster_labels))
+    utils.print_cluster_stats(df_data, utils.collect_clusters(df_data, cluster_labels))
+    if args.purity:
+        utils.report_cluster_purity(df_data, df_labels, cluster_labels)
+
+if __name__ == "__main__":
+    main()

@@ -1,6 +1,7 @@
 import pandas as pd 
 import numpy as np
 import matplotlib.pyplot as plt
+import matplotlib.axes as ax
 import argparse
 import random
 from dbscan import plot_clusters
@@ -12,10 +13,12 @@ def parse_args():
     parser.add_argument("-k", "--k", required=True, type=int, help="number of clusters")
     parser.add_argument("-p", "--plot", action="store_true")
     parser.add_argument("-p3d", "--plot3d", action="store_true")
+    parser.add_argument("-c", "--class_labels", type=str, help="file containing class labels for data file")
 
     parser.add_argument("-t", "--threshold", required=True, type=float, help="threshold for stopping")
     parser.add_argument("-f", "--try_params", action="store_true")
     parser.add_argument("-m", "--max_k", type=int)
+    parser.add_argument("-purity", "--purity", action="store_true")
     
     args = parser.parse_args()
 
@@ -30,12 +33,11 @@ def select_initial_centroids(df, k):
     initial_centroid = centroid(sample)
 
     furthest = np.argmax(np.linalg.norm(np.add(-np.array(initial_centroid), sample), axis=1))
-    centroid_df = pd.DataFrame(np.zeros((k, len(df.columns))), index=list(range(k)))
+    centroid_df = pd.DataFrame(np.zeros((k, len(df.columns))), index=list(range(k)), columns=df.columns)
     centroid_df.loc[0] = sample.iloc[furthest]
     centroids = {furthest}
     
     for i in range(0, k-1):
-        print(f"centroid df is: {centroid_df}")
         sum_dists = []
         for (idx, row) in sample[~sample.index.isin(centroids)].iterrows():
             sum_dist = np.sum(np.linalg.norm(np.add(-np.array(row), centroid_df), axis=1))
@@ -43,30 +45,21 @@ def select_initial_centroids(df, k):
 
         m = max(sum_dists, key=lambda kv: kv[1])
         furthest_pt = m[0]
-        #print(f"furthest_pt: {furthest_pt}, row: {row}")
         centroids.add(furthest_pt)
-        #print(furthest_pt)
-        print(f"{sample.loc[furthest_pt]}")
         centroid_df.loc[i+1, :] = sample.loc[furthest_pt]
-
     return (centroids, centroid_df)
     
 def check_stopping_conditions(centroids_old, centroids_new, threshold):
-    # [c1, c2, c3] [c1', c2', c3']
-
     sum_dist = np.sum(np.linalg.norm(centroids_old-centroids_new, axis=1))
-    print("sum dist: {}".format(sum_dist))
 
     return sum_dist <= threshold
 
 def recompute_centroids(df, centroid_df, k):
-    print("k: {}".format(k))
     labels = pd.Series([np.argmin(np.linalg.norm(np.add(-np.array(row), centroid_df), axis=1))
                         for (_, row) in df.iterrows()], index=df.index)
 
     #centroid_df_rows = [None]*k
-    centroid_df_new = pd.DataFrame(np.zeros((k, len(df.columns))), index=centroid_df.index) 
-    print(f"centroid_df_new: {centroid_df_new}")
+    centroid_df_new = pd.DataFrame(np.zeros((k, len(df.columns))), index=centroid_df.index, columns=df.columns) 
     uniq = labels.unique()
     for idx in centroid_df.index:
         if idx not in uniq:
@@ -78,12 +71,9 @@ def recompute_centroids(df, centroid_df, k):
 
 def kmeans(df, k, threshold):
     _, centroid_df = select_initial_centroids(df, k)
-    print(f"k = {k} initial centroids: ")
-    print(centroid_df)
     centroid_df_new, lbls = recompute_centroids(df, centroid_df, k)
     n = 0
     while not check_stopping_conditions(centroid_df, centroid_df_new, threshold):
-        print("iteration: {}".format(n))
         centroid_df = centroid_df_new
         centroid_df_new, lbls = recompute_centroids(df, centroid_df_new, k)
         n += 1
@@ -98,7 +88,9 @@ def create_k_sse_plot(df, max_k, threshold):
         lbls = kmeans(df, k, threshold)
         sse = utils.total_sse(df, utils.collect_clusters(df, lbls))
         y.append(sse)
-    
+    plt.xlabel('k')
+    plt.ylabel('Total SSE') 
+    plt.xticks(np.arange(1, k+1))
     plt.plot(x, y)
     plt.show()
 
@@ -110,17 +102,21 @@ def plot_clusters_3d(df, lbls):
 
 def main():
     args = parse_args()
-    df = utils.parse_csv(args.datafile)
+    data_df, labels_df = utils.parse_csv(args.datafile)
 
     if args.try_params:
-        create_k_sse_plot(df, args.max_k, args.threshold)
+        create_k_sse_plot(data_df, args.max_k, args.threshold)
 
-    lbls = kmeans(df, args.k, args.threshold)
+    lbls = kmeans(data_df, args.k, args.threshold)
 
     if args.plot:
-        plot_clusters(df, lbls)
+        plot_clusters(data_df, lbls)
     elif args.plot3d:
-        plot_clusters_3d(df, lbls)
+        plot_clusters_3d(data_df, lbls)
+    
+    utils.print_cluster_stats(data_df, utils.collect_clusters(data_df, lbls))
+    if args.purity:
+        utils.report_cluster_purity(data_df, labels_df, lbls)
 
 if __name__ == "__main__":
     main()

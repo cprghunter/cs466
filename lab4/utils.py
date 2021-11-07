@@ -16,25 +16,38 @@ def calculate_centroid(cluster, df):
 
 def print_cluster_stats(df, clusters, key_col=None):
     sse_tot = 0
+    outliers = None
+    if -1 in clusters:
+        outliers = clusters[-1]
+        del clusters[-1]
+
     for (lbl, cluster) in sorted(clusters.items()):
         print(f"Cluster: {lbl}: ")
         centroid = calculate_centroid(cluster, df)
         print(f"Center: {format_row(centroid)}")
         mx, mn, avg = max_min_avg_dist(df, cluster, centroid)
         print(f"distances to center (min, max, average): ({mn}, {mx}, {avg})")
-        print(f"{len(cluster)} points:")
         print_cluster(df, cluster, key_col)
 
         sse = calculate_sse(df, cluster, centroid)
         sse_tot += sse
     
+    if outliers is not None:
+        print(f"Outliers: ")
+        print_cluster(df, outliers)
+    
     #print(f"Silhouette Score: {silhouette(df, clusters)}")
     print(f"SSE: {sse_tot}")
+
+def report_cluster_purity(df, df_labels, labels):
+    p = purity(df, df_labels, '0', labels)
+    print(f"Purity: {p}")
 
 def format_row(row):
     return ",".join(map(str, row.values))
 
 def print_cluster(df, cluster, key_col=None, taboff=1):
+    print(f"{len(cluster)} points:")
     for row_idx in sorted(cluster):
         row = df.loc[row_idx]
         print("\t"*taboff + f"{row[key_col] if key_col else format_row(row)}")
@@ -55,6 +68,28 @@ def parse_line(line, reader, is_numeric):
         
     return (numeric, non_numeric)
 
+def purity(df, df_labels, class_col, labels):
+    df = df.copy()
+    df['class'] = df_labels[class_col]
+    df['label'] = labels
+    correctly_assigned = 0
+    for lbl in pd.Series(labels).unique():
+        cluster_classes = df[df['label'] == lbl]['class']
+        cluster_class_cnts = cluster_classes.value_counts()
+        most_common = cluster_class_cnts.idxmax()
+        correctly_assigned += cluster_class_cnts[most_common]
+    return correctly_assigned / len(df)
+
+# given a file name, parses it, and 
+# returns (a, b) where
+# a is a dataframe with the columns that should be used for clustering
+# b is a dataframe containing the non-data indexing/class columns
+def parse_csv(file_name: str) -> tuple[pd.DataFrame, pd.DataFrame]:
+    df = pd.read_csv(file_name)
+    to_drop = [col for col in df.columns if '0' in col]
+    
+    return df.drop(columns=to_drop), df.filter(items=to_drop),
+"""
 def parse_csv(file_name):
     with open(file_name, 'r') as f:
         contents = f.read()
@@ -74,6 +109,20 @@ def parse_csv(file_name):
     if len(index) == 0:
         index = list(range(len(rows)))
     return pd.DataFrame(rows, index=index, columns=columns)
+"""
+
+def cluster_labels(clusters, class_labels):
+    cluster_labels = {}
+    for lbl, clust in clusters:
+        cluster_labels[lbl] = plurality(clust, class_labels)
+    return cluster_labels
+
+def plurality(neighbors, class_labels):
+    class_counts = defaultdict(lambda: 0)
+    for l in neighbors:
+            class_counts[class_labels[l]] += 1
+
+    return max(class_counts.items(), key=lambda kv: kv[1])[0]
 
 def distance_matrix(df1, df2):
     d_matrix_rows = []
